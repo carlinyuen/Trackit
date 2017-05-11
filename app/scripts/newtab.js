@@ -364,13 +364,17 @@ var trackit = (function() {
     $.each(data.items, function(i, el) {
       // Update latest event that passed
       var date = new Date(Date.parse(el.end.dateTime));
-      prevEnd = new Date(Date.parse(prev.end.dateTime));
+      if (prev) {
+        prevEnd = new Date(Date.parse(prev.end.dateTime));
+      }
       if (date < now && prev && prevEnd < date) {
         prev = el;
       }
       // Update nearest upcoming event
       date = new Date(Date.parse(el.start.dateTime));
-      upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
+      if (upcoming) {
+        upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
+      }
       if (date > now && upcoming && upcomingStart > date) {
         upcoming = el;
       }
@@ -394,7 +398,7 @@ var trackit = (function() {
         .src(upcoming.htmlLink)
         .text(upcoming.summary)
       ).append($(document.createElement('small'))
-        .text(upcomingStart.toLocaleTimeString() + ' to ' upcomingEnd.toLocaleTimeString())
+        .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
       );
 
     // Show UI
