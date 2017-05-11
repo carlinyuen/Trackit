@@ -54,6 +54,20 @@ body {
   background: #ddd;
 }
 
+/* Events */
+.events {
+  display: none;
+}
+.events .previous {
+  opacity: 0.5;
+  transition: opacity 1s;
+}
+.events .previous:hover {
+  opacity: 1;
+}
+.events .upcoming {
+}
+
 /* Projects section */
 .projects {
   display: none;

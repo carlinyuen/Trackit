@@ -272,6 +272,7 @@ var trackit = (function() {
     console.log('eventsFetched:', data);
     if (data) {
       eventList = data;
+      populateEvents(data);
     }
   }
 
@@ -309,7 +310,7 @@ var trackit = (function() {
       onUserInfoFetched(userInfo);
     }
     if (!eventList) {
-      // getEvents();
+      getEvents();
     } else {
       onEventsFetched(eventList);
     }
@@ -349,6 +350,57 @@ var trackit = (function() {
     .addClass('loaded');
   }
 
+  // Populate event info
+  function populateEvents(data) {
+    var prev
+      , prevStart
+      , prevEnd
+      , upcoming
+      , upcomingStart
+      , upcomingEnd
+      , now = new Date()
+    ;
+
+    $.each(data.items, function(i, el) {
+      // Update latest event that passed
+      var date = new Date(Date.parse(el.end.dateTime));
+      prevEnd = new Date(Date.parse(prev.end.dateTime));
+      if (date < now && prev && prevEnd < date) {
+        prev = el;
+      }
+      // Update nearest upcoming event
+      date = new Date(Date.parse(el.start.dateTime));
+      upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
+      if (date > now && upcoming && upcomingStart > date) {
+        upcoming = el;
+      }
+    });
+    console.log('most recent event:', prev);
+    console.log('upcoming event:', upcoming);
+
+    // Update event UI
+    prevStart = new Date(Date.parse(prev.start.dateTime));
+    upcomingEnd = new Date(Date.parse(upcoming.end.dateTime));
+    $('.events .previous .panel-title')
+      .append($(document.createElement('a'))
+        .src(prev.htmlLink)
+        .text(prev.summary)
+      ).append($(document.createElement('small'))
+        .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
+      );
+
+    $('.events .upcoming .panel-title')
+      .append($(document.createElement('a'))
+        .src(upcoming.htmlLink)
+        .text(upcoming.summary)
+      ).append($(document.createElement('small'))
+        .text(upcomingStart.toLocaleTimeString() + ' to ' upcomingEnd.toLocaleTimeString())
+      );
+
+    // Show UI
+    $('.events').fadeIn();
+  }
+
   // Populate progressbar
   function populateProgress(progressbar, data) {
     console.log('populateProgress:', data);
@@ -367,7 +419,8 @@ var trackit = (function() {
   // Add more input fields for the project
   function addInputFields() {
     var fields = ($(document.createElement('div')).addClass('form-group extraInputFields'));
-    fields.html('<div class="col-sm-offset-2 col-sm-10">\
+    fields.html('\
+    <div class="col-sm-offset-2 col-sm-10">\
       <select class="form-control inputSource">\
         <option>Drive</option>\
         <option>Gmail</option>\
