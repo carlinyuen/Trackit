@@ -47,13 +47,18 @@ var trackit = (function() {
     switch (state) {
       case STATE_START:
         enableButton(buttonSignin);
+        buttonSignin.fadeIn();
+        labelWelcome.text('Welcome to Trackit')
+          .fadeIn();
         break;
       case STATE_ACQUIRING_AUTHTOKEN:
         console.log('Acquiring token...');
         disableButton(buttonSignin);
         break;
       case STATE_AUTHTOKEN_ACQUIRED:
-        buttonSignin.fadeOut(function() {this.remove();});
+        buttonSignin.fadeOut(function() {
+          labelWelcome.delay(2).fadeOut();
+        });
         break;
     }
   }
@@ -83,6 +88,7 @@ var trackit = (function() {
     }
 
     function requestStart() {
+      console.log('requestStart:', url);
       $.ajax({
         type: method,
         url: url,
@@ -90,18 +96,20 @@ var trackit = (function() {
         dataType: 'json',
         headers: { 'Authorization': 'Bearer ' + access_token },
         success: callback,
-        error: function() {
-          console.log('FAIL');
-          if (retry) {
-            retry = false;
-            chrome.identity.removeCachedAuthToken({
-              token: access_token
-            }, getToken)
-          } else if (callback) {
-            callback(null);
-          }
-        }
+        error: requestError
       });
+    }
+
+    function requestError() {
+      console.log('request error!');
+      if (retry) {
+        retry = false;
+        chrome.identity.removeCachedAuthToken({
+          token: access_token
+        }, getToken)
+      } else if (callback) {
+        callback(null);
+      }
     }
   }
 
@@ -162,10 +170,12 @@ var trackit = (function() {
   function interactiveSignIn(callback) {
     changeState(STATE_ACQUIRING_AUTHTOKEN);
 
-    chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
+    chrome.identity.getAuthToken({
+      'interactive': true
+    }, function(token) {
       if (chrome.runtime.lastError) {
         console.log(chrome.runtime.lastError);
-        alert('Could not authenticate you. :(');
+        console.log('Could not authenticate. :(');
         changeState(STATE_START);
       } else {
         console.log('Token acquired: ' + token +
@@ -178,7 +188,6 @@ var trackit = (function() {
 
   function revokeToken() {
     console.log('revokeToken');
-    labelWelcome.text = '';
     chrome.identity.getAuthToken({ 'interactive': false },
       function(current_token) {
         if (!chrome.runtime.lastError) {
@@ -205,9 +214,9 @@ var trackit = (function() {
       getUserInfo();
     }
     if (!eventList) {
-      getEvents();
+      // getEvents();
     }
-    getProgress();
+    // getProgress();
   }
 
   // Setup progressbars
@@ -231,11 +240,14 @@ var trackit = (function() {
       lazyloadBackground();
 
       imageProfile = $('.profile');
-      buttonSignin = $('button.signin');
-      buttonLogout = $('button.logout');
-      labelWelcome = $('.welcome');
+      buttonSignin = $('.signin');
+      buttonLogout = $('.logout');
+      labelWelcome = $('.welcome .lead');
 
-      buttonSignin.click(function() { interactiveSignIn(getData); });
+      buttonSignin.click(function(e) {
+        e.preventDefault();
+        getData();
+      });
       buttonLogout.click(revokeToken);
 
       $('.flip-container').hover(function() {

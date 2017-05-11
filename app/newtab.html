@@ -12,21 +12,41 @@
   </head>
   <body>
     <div class="background"></div>
-
-    <div class="flip-container">
-      <div class="flipper">
-        <div class="front profile"></div>
-        <button class="back logout"></button>
+    <div class="container-fluid">
+      <div class="row"
+        <h1 class="title">Trackit!</h1>
+        <div class="flip-container">
+          <div class="flipper">
+            <div class="front profile"></div>
+            <button class="back logout"></button>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <h1>Trackit!</h1>
-    <div class="welcome">
-      <h2 class="hello"></h2>
-      <button class="signin">Sign in!</button>
-    </div>
-    
-    <div class="progressbar"></div>
+      <div class="row">
+        <div class="welcome col-md-12">
+          <h2 class="lead">Welcome to Trackit</h2>
+          <div class="btn-group">
+            <!-- <a class='btn btn-danger disabled'><i class="googleLogo"></i></a> -->
+            <a class='signin btn btn-danger' href=''> Sign in with Google</a>
+          </div>
+        </div>
+
+        <div class="projects blockquote">
+          <h2 class="lead">Projects</h2>
+          <div class="portfolio">
+            <div class="zerostate">
+              <h2>No projects yet?</h2>
+              <button>Add one!</button>
+              <p>Trackit integrates with your key day-to-day tools.</p>
+              <img class="promoIcon" src="images/icon-drive.png"/>
+              <img class="promoIcon" src="images/icon-calendar.png"/>
+              <img class="promoIcon" src="images/icon-gmail.png"/>
+              <img class="promoIcon" src="images/icon-bug.png"/>
+            </div>
+          </div>
+        </div>
+      </div>
 
     <!-- build:js scripts/newtab-vendor.js -->
     <!-- bower:js -->

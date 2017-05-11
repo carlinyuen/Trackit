@@ -21,21 +21,42 @@ body {
   opacity: 0;
   transition: opacity 1s;
 }
+.title {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 24px;
+}
 
 /* Signin button */
 .welcome {
   text-align: center;
+  position: fixed;
+  top: 45%;
+}
+.welcome .lead {
+  font-size: 4em;
+  color: white;
+  text-shadow: #222 2px 2px;
 }
 .signin {
-  position: absolute;
-  top: 50%;
-  width: 10em;
-  height: 3em;
+  padding: 1em 3em;
+  font-size: 18px;
+}
+.signin .googleLogo {
+  background: transparent url('chrome-extension://__MSG_@@extension_id__/images/icon-google.png') center center no-repeat;
+  width: 16px;
+  height: 20px;
 }
 
 /* Logout button */
 .logout {
 
+}
+
+/* Projects section */
+.projects {
+  display: none;
 }
 
  /* Progress bar for work items */
