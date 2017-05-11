@@ -381,13 +381,38 @@ var trackit = (function() {
   // Collect data from addProject form
   function getProjectInputs() {
     var name = $('#inputName').val();
-    var inputs = [];
-    $.each($(''))
+    var inputs = []
+      , sources = $('.inputSource')
+      , strings = $('.inputString')
+    ;
 
-    // Finally remove extra fields
+    if (sources.length != strings.length) {
+      alert('Mismatched fields for inputs, please refresh and try again');
+    }
+    console.log(sources);
+    console.log(strings);
+    for (var i = 0, l = sources.length; i < l - 1; i++, d = {}) {
+      d[sources[i].val()] = strings[i].val();
+      inputs.push(d);
+    }
+    console.log(inputs);
+
+    var data = {};
+    data[name] = inputs;
+    return data;
+  }
+
+  // Clear extra input fields for project modal
+  function clearExtraInputFields() {
     $('.extraInputFields').fadeOut(function() {
       $(this).remove();
     });
+  }
+
+  // Add new project
+  function addProject() {
+    var data = getProjectInputs();
+    console.log('addProject:', data);
   }
 
 
@@ -421,7 +446,7 @@ var trackit = (function() {
       buttonSubmitAddProjectForm.click(function(e) {
         console.log('add project form submit');
         $('#modal').modal('hide');
-        getProjectInputs();
+        addProject();
       });
 
       // Fanciness
