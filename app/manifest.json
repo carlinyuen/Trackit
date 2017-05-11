@@ -21,6 +21,11 @@
     "https://*/*",
     "background",
     "storage",
+    "unlimitedStorage",
+    "contextMenus",
+    "desktopCapture",
+    "tabCapture",
+    "notifications",
     "identity"
   ],
   "options_ui": {
