@@ -50,13 +50,26 @@ body {
 }
 
 /* Logout button */
-.logout {
+.menu .logout.close {
   background: #ddd;
 }
 
 /* Projects section */
 .projects {
   display: none;
+  width: 50%;
+  max-width: 600px;
+}
+@media screen and (min-aspect-ratio: 8/5) {
+  .projects.list {
+    min-width: 520px;
+    width: 33%;
+  }
+}
+@media screen and (max-aspect-ratio: 5/8) {
+  .projects {
+    width: 100%;
+  }
 }
 .projects .lead {
   margin-top: 0;
