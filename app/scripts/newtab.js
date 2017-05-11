@@ -364,42 +364,54 @@ var trackit = (function() {
     $.each(data.items, function(i, el) {
       // Update latest event that passed
       var date = new Date(Date.parse(el.end.dateTime));
-      if (prev) {
-        prevEnd = new Date(Date.parse(prev.end.dateTime));
-      }
-      if (date < now && prev && prevEnd < date) {
+      if (!prev && date < now) {
         prev = el;
+      }
+      else if (prev) {
+        prevEnd = new Date(Date.parse(prev.end.dateTime));
+        if (date < now && prev && prevEnd < date) {
+          prev = el;
+        }
       }
       // Update nearest upcoming event
       date = new Date(Date.parse(el.start.dateTime));
-      if (upcoming) {
-        upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
-      }
-      if (date > now && upcoming && upcomingStart > date) {
+      if (!upcoming && date > now) {
         upcoming = el;
+      } else if (upcoming) {
+        upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
+        if (date > now && upcoming && upcomingStart > date) {
+          upcoming = el;
+        }
       }
     });
     console.log('most recent event:', prev);
     console.log('upcoming event:', upcoming);
 
     // Update event UI
-    prevStart = new Date(Date.parse(prev.start.dateTime));
-    upcomingEnd = new Date(Date.parse(upcoming.end.dateTime));
-    $('.events .previous .panel-title')
-      .append($(document.createElement('a'))
-        .src(prev.htmlLink)
-        .text(prev.summary)
-      ).append($(document.createElement('small'))
-        .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
-      );
-
-    $('.events .upcoming .panel-title')
-      .append($(document.createElement('a'))
-        .src(upcoming.htmlLink)
-        .text(upcoming.summary)
-      ).append($(document.createElement('small'))
-        .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
-      );
+    if (prev) {
+      prevStart = new Date(Date.parse(prev.start.dateTime));
+      $('.events .previous .panel-title')
+        .append($(document.createElement('a'))
+          .attr('href', prev.htmlLink)
+          .text(prev.summary)
+        ).append($(document.createElement('small'))
+          .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
+        );
+    } else {
+      $('.events .previous').fadeOut();
+    }
+    if (upcoming) {
+      upcomingEnd = new Date(Date.parse(upcoming.end.dateTime));
+      $('.events .upcoming .panel-title')
+        .append($(document.createElement('a'))
+          .attr('href', upcoming.htmlLink)
+          .text(upcoming.summary)
+        ).append($(document.createElement('small'))
+          .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
+        );
+    } else {
+      $('.events .upcoming').fadeOut();
+    }
 
     // Show UI
     $('.events').fadeIn();
