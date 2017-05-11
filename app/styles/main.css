@@ -4,3 +4,6 @@ body {
 img.profile {
   filter: invert(1);
 }
+.progressbar {
+  height: 24px;
+}

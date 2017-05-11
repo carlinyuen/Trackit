@@ -78,21 +78,21 @@
 
 		    try {
 			    if (this.percent <= this.warningMarker) {
-				    this.element.find('.bar-success').css('width', this.percent + "%");
-				    this.element.find('.bar-warning').css('width', "0%");
-				    this.element.find('.bar-danger').css('width', "0%");
+				    this.element.find('.bar-success').css('width', this.percent + '%');
+				    this.element.find('.bar-warning').css('width', '0%');
+				    this.element.find('.bar-danger').css('width', '0%');
 				    return;
 			    }
 
-			    this.element.find('.bar-success').css('width', this.warningMarker + "%");
+			    this.element.find('.bar-success').css('width', this.warningMarker + '%');
 			    if (this.percent > this.warningMarker && this.percent <= this.dangerMarker) {
-				    this.element.find('.bar-warning').css('width', (this.percent - this.warningMarker) + "%");
-				    this.element.find('.bar-danger').css('width', "0%");
+				    this.element.find('.bar-warning').css('width', (this.percent - this.warningMarker) + '%');
+				    this.element.find('.bar-danger').css('width', '0%');
 				    return;
 			    }
 
-			    this.element.find('.bar-warning').css('width', (this.dangerMarker - this.warningMarker) + "%");
-			    this.element.find('.bar-danger').css('width', (this.percent - this.dangerMarker) + "%");
+			    this.element.find('.bar-warning').css('width', (this.dangerMarker - this.warningMarker) + '%');
+			    this.element.find('.bar-danger').css('width', (this.percent - this.dangerMarker) + '%');
 
 		    } finally {
 		        this._triggerPositionChanged();
@@ -103,14 +103,14 @@
 			this.position = 0;
 			this.percent = 0;
 			this._triggerPositionChanged();
-			this.element.find('.bar-success').css('width', "0%");
-			this.element.find('.bar-warning').css('width', "0%");
-			this.element.find('.bar-danger').css('width', "0%");
+			this.element.find('.bar-success').css('width', '0%');
+			this.element.find('.bar-warning').css('width', '0%');
+			this.element.find('.bar-danger').css('width', '0%');
 		},
 
 		_triggerPositionChanged: function () {
 			this.element.trigger({
-				type: "positionChanged",
+				type: 'positionChanged',
 				position: this.position,
 				percent: this.percent
 			});

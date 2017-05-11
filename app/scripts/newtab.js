@@ -1,6 +1,6 @@
 'use strict';
 
-var googlePlusUserLoader = (function() {
+var trackit = (function() {
 
   var STATE_START = 1;
   var STATE_ACQUIRING_AUTHTOKEN = 2;
@@ -108,7 +108,7 @@ var googlePlusUserLoader = (function() {
       'https://people.googleapis.com/v1/people/me',
       onUserInfoFetched,
       {
-        "requestMask.includeField": "person.names,person.photos"
+        'requestMask.includeField': 'person.names,person.photos'
       });
   }
 
@@ -182,6 +182,23 @@ var googlePlusUserLoader = (function() {
     if (!eventList) {
       getEvents();
     }
+    getProgress();
+  }
+
+  // Setup progressbars
+  function getProgress() {
+    populateProgress();
+  }
+
+  function populateProgress(data) {
+    $('.progressbar').progressbar({
+      warningMarker: 60,
+      dangerMarker: 80,
+      maximum: 100,
+    });
+    setTimeout(function() {
+      $('.progressbar').progressbar('setPosition', 100);
+    }, 1000);
   }
 
   return {
@@ -195,4 +212,4 @@ var googlePlusUserLoader = (function() {
 
 })();
 
-window.onload = googlePlusUserLoader.onload;
+window.onload = trackit.onload;
