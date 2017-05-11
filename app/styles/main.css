@@ -30,6 +30,7 @@ body {
 
 /* Signin button */
 .welcome {
+  display: none;
   text-align: center;
   position: fixed;
   top: 45%;
