@@ -258,7 +258,6 @@ var trackit = (function() {
       'brooke-lark-96398.jpg',
       'james-padolsey-152010.jpg',
       'john-towner-154060.jpg',
-      'massimo-mancini-113100.jpg',
       'matt-howard-248418.jpg',
       'web-agency-29200.jpg',
     ];
