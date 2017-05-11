@@ -8,17 +8,25 @@ var trackit = (function() {
   var DAYS_IN_ADVANCE = 2;
   var PATH_BACKGROUNDS = 'images/backgrounds/'
   var state = STATE_START;
-  var userInfo,
-    eventList;
-  var labelTitle,
-    buttonSignin,
-    navMenu,
-    welcomeDialog,
-    labelWelcome,
-    imageProfile,
-    projectPortfolio,
-    buttonLogout;
+  // Gangster cache for data
+  var userInfo
+    , eventList;
+  // UI objects
+  var labelTitle
+    , buttonSignin
+    , buttonLogout
+    , buttonAddProject
+    , navMenu
+    , welcomeDialog
+    , labelWelcome
+    , imageProfile
+    , projectPortfolio
+  ;
 
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  // Utility functions
   function disableButton(button) {
     button.attr('disabled', 'disabled');
   }
@@ -32,24 +40,12 @@ var trackit = (function() {
       return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function lazyloadBackground() {
-    var backgrounds = [
-      'andreas-ronningen-31469.jpg',
-      'brooke-lark-96398.jpg',
-      'james-padolsey-152010.jpg',
-      'john-towner-154060.jpg',
-      'massimo-mancini-113100.jpg',
-      'matt-howard-248418.jpg',
-      'web-agency-29200.jpg',
-    ];
-    var bgURL = chrome.extension.getURL(PATH_BACKGROUNDS + backgrounds[getRandomInt(0, backgrounds.length - 1)]);
-    var bg = new Image();
-    bg.src = bgURL;
-    $(bg).on('load', function() {
-      $('.background').css('background-image', 'url(' + $(this).attr('src') + ')').addClass('loaded');
-    });
-  }
 
+
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  // Change UI based on state
   function changeState(newState) {
     console.log('changeState:', state, 'to', newState);
     state = newState;
@@ -84,6 +80,52 @@ var trackit = (function() {
         });
         break;
     }
+  }
+
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
+  // OAuthentication and request handling
+
+  function interactiveSignIn(callback) {
+    changeState(STATE_ACQUIRING_AUTHTOKEN);
+
+    chrome.identity.getAuthToken({
+      'interactive': true
+    }, function(token) {
+      if (chrome.runtime.lastError) {
+        console.log(chrome.runtime.lastError);
+        console.log('Could not authenticate. :(');
+        changeState(STATE_START);
+      } else {
+        console.log('Token acquired: ' + token +
+          '. See chrome://identity-internals for details.');
+        callback();
+      }
+    });
+  }
+
+  // Revoke OAuth token
+  function revokeToken() {
+    console.log('revokeToken');
+    chrome.identity.getAuthToken({ 'interactive': false },
+      function(current_token) {
+        if (!chrome.runtime.lastError) {
+
+          // Remove the local cached token
+          chrome.identity.removeCachedAuthToken({
+            token: current_token
+          }, function() {});
+
+          // Make a request to revoke token in the server
+          $.get('https://accounts.google.com/o/oauth2/revoke?token=' + current_token);
+
+          // Update the user interface accordingly
+          changeState(STATE_START);
+          console.log('Token revoked and removed from cache. '+
+            'Check chrome://identity-internals to confirm.');
+        }
+    });
   }
 
   // Make an authenticated request, checking for token and getting it otherwise.
@@ -137,6 +179,11 @@ var trackit = (function() {
     }
   }
 
+  ////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////
+  // Google API calls
+
   function getEvents() {
     console.log('getEventInfo:');
     var startDate = new Date(), endDate = new Date();
@@ -168,8 +215,6 @@ var trackit = (function() {
       });
   }
 
-  // Code updating the user interface, when the user information has been
-  // fetched or displaying the error.
   function onUserInfoFetched(data) {
     console.log('UserInfoFetched:', data);
     if (data) {
@@ -190,47 +235,6 @@ var trackit = (function() {
       .addClass('loaded');
   }
 
-  // OnClick event handlers for the buttons.
-  function interactiveSignIn(callback) {
-    changeState(STATE_ACQUIRING_AUTHTOKEN);
-
-    chrome.identity.getAuthToken({
-      'interactive': true
-    }, function(token) {
-      if (chrome.runtime.lastError) {
-        console.log(chrome.runtime.lastError);
-        console.log('Could not authenticate. :(');
-        changeState(STATE_START);
-      } else {
-        console.log('Token acquired: ' + token +
-          '. See chrome://identity-internals for details.');
-        callback();
-      }
-    });
-  }
-
-  function revokeToken() {
-    console.log('revokeToken');
-    chrome.identity.getAuthToken({ 'interactive': false },
-      function(current_token) {
-        if (!chrome.runtime.lastError) {
-
-          // Remove the local cached token
-          chrome.identity.removeCachedAuthToken({
-            token: current_token
-          }, function() {});
-
-          // Make a request to revoke token in the server
-          $.get('https://accounts.google.com/o/oauth2/revoke?token=' + current_token);
-
-          // Update the user interface accordingly
-          changeState(STATE_START);
-          console.log('Token revoked and removed from cache. '+
-            'Check chrome://identity-internals to confirm.');
-        }
-    });
-  }
-
   // Get all relevant information
   function getData() {
     if (!userInfo) {
@@ -244,6 +248,35 @@ var trackit = (function() {
       onEventsFetched(eventList);
     }
     // getProgress();
+  }
+
+  ///////////////////////////////////////////////////
+  ////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////
+  // UI Related
+
+  // Set pretty background
+  function lazyloadBackground() {
+    var backgrounds = [
+      'andreas-ronningen-31469.jpg',
+      'brooke-lark-96398.jpg',
+      'james-padolsey-152010.jpg',
+      'john-towner-154060.jpg',
+      'massimo-mancini-113100.jpg',
+      'matt-howard-248418.jpg',
+      'web-agency-29200.jpg',
+    ];
+    var bgURL = chrome.extension.getURL(PATH_BACKGROUNDS + backgrounds[getRandomInt(0, backgrounds.length - 1)]);
+    var bg = new Image();
+    bg.src = bgURL;
+    $(bg).on('load', function() {
+      $('.background').css('background-image', 'url(' + $(this).attr('src') + ')').addClass('loaded');
+    });
+  }
+
+  // Create a project and add hooks
+  function showAddProjectDialog() {
+    
   }
 
   // Setup progressbars
@@ -274,13 +307,17 @@ var trackit = (function() {
       welcomeDialog = $('.welcome');
       labelWelcome = $('.welcome .lead');
       projectPortfolio = $('.projects');
+      buttonAddProject = $('.addProject');
 
+      // Button handlers
       buttonSignin.click(function(e) {
         e.preventDefault();
         interactiveSignIn(getData);
       });
       buttonLogout.click(revokeToken);
+      buttonAddProject.click(showAddProjectDialog);
 
+      // Fanciness
       $('.flip-container').hover(function() {
         $(this).addClass('hover');
       }, function() {

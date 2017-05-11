@@ -82,6 +82,7 @@ body {
 .projects .jumbotron .promoIcon {
   width: 48px;
   height: 48px;
+  opacity: 0.7;
 }
 
 
