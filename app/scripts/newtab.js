@@ -226,13 +226,9 @@ var trackit = (function() {
     }
   }
 
-  function populateUserInfo(user_info) {
-    if (!user_info) return;
-    labelWelcome.text('Hello, ' + user_info.names[0].givenName + '!');
-    if (!user_info.photos[0]) return;
-    imageProfile
-      .css('background-image', 'url(' + user_info.photos[0].url + ')')
-      .addClass('loaded');
+  // Setup progressbars
+  function getProgress() {
+    populateProgress();
   }
 
   // Get all relevant information
@@ -274,26 +270,37 @@ var trackit = (function() {
     });
   }
 
+  // Populate user info
+  function populateUserInfo(user_info) {
+    if (!user_info) return;
+    labelWelcome.text('Hello, ' + user_info.names[0].givenName + '!');
+    if (!user_info.photos[0]) return;
+    imageProfile
+    .css('background-image', 'url(' + user_info.photos[0].url + ')')
+    .addClass('loaded');
+  }
+
+  // Populate progressbar
+  function populateProgress(progressbar, data) {
+    console.log('populateProgress:', data);
+    if (progressbar) {
+      progressbar.progressbar({
+        warningMarker: Math.round(data.complete / data.total * 100),
+        dangerMarker: Math.round(data.inProgress / data.total * 100),
+        maximum: 100,
+      });
+      setTimeout(function() {
+        progressbar.progressbar('setPosition', 100);
+      }, 1000);
+    }
+  }
+
   // Create a project and add hooks
   function showAddProjectDialog() {
-    
+
   }
 
-  // Setup progressbars
-  function getProgress() {
-    populateProgress();
-  }
 
-  function populateProgress(data) {
-    $('.progressbar').progressbar({
-      warningMarker: 60,
-      dangerMarker: 80,
-      maximum: 100,
-    });
-    setTimeout(function() {
-      $('.progressbar').progressbar('setPosition', 100);
-    }, 1000);
-  }
 
   return {
     onload: function() {
