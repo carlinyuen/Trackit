@@ -9,7 +9,7 @@ var trackit = (function() {
   var PATH_BACKGROUNDS = 'images/backgrounds/'
   var state = STATE_START;
   var userInfo, eventList;
-  var buttonSignin, labelWelcome;
+  var buttonSignin, labelWelcome, imageProfile, buttonLogout;
 
   function disableButton(button) {
     button.attr('disabled', 'disabled');
@@ -19,14 +19,12 @@ var trackit = (function() {
     button.attr('disabled');
   }
 
-  /**
-   * Returns a random integer between min (inclusive) and max (inclusive)
-   */
+  // Returns a random integer between min (inclusive) and max (inclusive)
   function getRandomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function randomBackgroundURL() {
+  function lazyloadBackground() {
     var backgrounds = [
       'andreas-ronningen-31469.jpg',
       'brooke-lark-96398.jpg',
@@ -36,7 +34,12 @@ var trackit = (function() {
       'matt-howard-248418.jpg',
       'web-agency-29200.jpg',
     ];
-    return PATH_BACKGROUNDS + backgrounds[getRandomInt(0, backgrounds.length)];
+    var bgURL = chrome.extension.getURL(PATH_BACKGROUNDS + backgrounds[getRandomInt(0, backgrounds.length - 1)]);
+    var bg = new Image();
+    bg.src = bgURL;
+    $(bg).on('load', function() {
+      $('.background').css('background-image', 'url(' + $(this).attr('src') + ')').addClass('loaded');
+    });
   }
 
   function changeState(newState) {
@@ -150,10 +153,9 @@ var trackit = (function() {
     if (!user_info) return;
     labelWelcome.text('Hello, ' + user_info.names[0].givenName + '!');
     if (!user_info.photos[0]) return;
-    $(document.createElement('img'))
-      .addClass('profile')
-      .attr('src', user_info.photos[0].url)
-      .appendTo(labelWelcome);
+    imageProfile
+      .css('background-image', 'url(' + user_info.photos[0].url + ')')
+      .addClass('loaded');
   }
 
   // OnClick event handlers for the buttons.
@@ -175,14 +177,16 @@ var trackit = (function() {
   }
 
   function revokeToken() {
-    labelWelcome.innerHTML='';
+    console.log('revokeToken');
+    labelWelcome.text = '';
     chrome.identity.getAuthToken({ 'interactive': false },
       function(current_token) {
         if (!chrome.runtime.lastError) {
 
           // Remove the local cached token
-          chrome.identity.removeCachedAuthToken({ token: current_token },
-            function() {});
+          chrome.identity.removeCachedAuthToken({
+            token: current_token
+          }, function() {});
 
           // Make a request to revoke token in the server
           $.get('https://accounts.google.com/o/oauth2/revoke?token=' + current_token);
@@ -224,10 +228,22 @@ var trackit = (function() {
 
   return {
     onload: function() {
-      $('body').attr('background-url', randomBackgroundURL());
+      lazyloadBackground();
+
+      imageProfile = $('.profile');
       buttonSignin = $('button.signin');
-      buttonSignin.click(function() { interactiveSignIn(getData); });
+      buttonLogout = $('button.logout');
       labelWelcome = $('.welcome');
+
+      buttonSignin.click(function() { interactiveSignIn(getData); });
+      buttonLogout.click(revokeToken);
+
+      $('.flip-container').hover(function() {
+        $(this).addClass('hover');
+      }, function() {
+        $(this).removeClass('hover');
+      });
+
       getData();
     }
   };

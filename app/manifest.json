@@ -54,6 +54,8 @@
     "default_title": "Trackit",
     "default_popup": "popup.html"
   },
+  "web_accessible_resources": [
+  ],
   "oauth2": {
     "client_id": "26398682427-3qaoo84dciq63ohj46l9dq8gfjqc6r6o.apps.googleusercontent.com",
     "scopes": [

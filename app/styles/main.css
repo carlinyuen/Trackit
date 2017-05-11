@@ -8,12 +8,93 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+}
+.background {
+  position: absolute;
+  z-index:-1;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: #000 center center no-repeat;
   background-size: cover;
+  opacity: 0;
+  transition: opacity 1s;
 }
-img.profile {
-  filter: invert(1);
+
+/* Signin button */
+.welcome {
+  text-align: center;
 }
+.signin {
+  position: absolute;
+  top: 50%;
+  width: 10em;
+  height: 3em;
+}
+
+/* Logout button */
+.logout {
+
+}
+
+ /* Progress bar for work items */
 .progressbar {
   height: 24px;
+}
+
+/* Profile pictures */
+.profile {
+  width: 48px;
+  height: 48px;
+  opacity: 0;
+  transition: opacity 1s;
+  background: transparent center center no-repeat;
+  background-size: contain;
+  filter: invert(1);
+}
+
+/* Flipping transform fun */
+.flip-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  margin: 24px;
+	perspective: 100px;
+}
+.flip-container:hover .flipper, .flip-container.hover .flipper {
+  transform: rotateY(180deg);
+}
+.flip-container, .front, .back {
+	width: 48px;
+	height: 48px;
+  border-radius: 50%;
+}
+.flipper {
+	transition: 0.6s;
+	transform-style: preserve-3d;
+	position: relative;
+}
+.front, .back {
+	backface-visibility: hidden;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.front {
+	z-index: 2;
+	transform: rotateY(0deg);
+}
+.back {
+	transform: rotateY(180deg);
+}
+
+
+/* Special states of UI */
+.loaded {
+  opacity: 1;
+}
+.blur {
+  filter: blur(50px);
+  transform: scale(1);
 }
