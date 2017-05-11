@@ -1,6 +1,15 @@
+
 *.DS_Store
 .AppleDouble
 .LSOverride
+node_modules
+temp
+.tmp
+dist
+.sass-cache
+app/bower_components
+test/bower_components
+package
 
 # Icon must end with two \r
 Icon
@@ -24,3 +33,5 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+
