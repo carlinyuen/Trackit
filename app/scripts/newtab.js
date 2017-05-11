@@ -6,6 +6,7 @@ var trackit = (function() {
   var STATE_ACQUIRING_AUTHTOKEN = 2;
   var STATE_AUTHTOKEN_ACQUIRED = 3;
   var DAYS_IN_ADVANCE = 2;
+  var PATH_BACKGROUNDS = 'images/backgrounds/'
   var state = STATE_START;
   var userInfo, eventList;
   var buttonSignin, labelWelcome;
@@ -16,6 +17,26 @@ var trackit = (function() {
 
   function enableButton(button) {
     button.attr('disabled');
+  }
+
+  /**
+   * Returns a random integer between min (inclusive) and max (inclusive)
+   */
+  function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function randomBackgroundURL() {
+    var backgrounds = [
+      'andreas-ronningen-31469.jpg',
+      'brooke-lark-96398.jpg',
+      'james-padolsey-152010.jpg',
+      'john-towner-154060.jpg',
+      'massimo-mancini-113100.jpg',
+      'matt-howard-248418.jpg',
+      'web-agency-29200.jpg',
+    ];
+    return PATH_BACKGROUNDS + backgrounds[getRandomInt(0, backgrounds.length)];
   }
 
   function changeState(newState) {
@@ -203,6 +224,7 @@ var trackit = (function() {
 
   return {
     onload: function() {
+      $('body').attr('background-url', randomBackgroundURL());
       buttonSignin = $('button.signin');
       buttonSignin.click(function() { interactiveSignIn(getData); });
       labelWelcome = $('.welcome');
