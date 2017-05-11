@@ -46,7 +46,9 @@ var googlePlusUserLoader = (function() {
         interactive: false
       }, function(token) {
         if (chrome.runtime.lastError) {
-          callback(null);
+          if (callback) {
+            callback(null);
+          }
           return;
         }
 
@@ -71,7 +73,7 @@ var googlePlusUserLoader = (function() {
             chrome.identity.removeCachedAuthToken({
               token: access_token
             }, getToken)
-          } else {
+          } else if (callback) {
             callback(null);
           }
         }
@@ -104,7 +106,10 @@ var googlePlusUserLoader = (function() {
     console.log('getUserInfo:');
     requestWithAuth('GET',
       'https://people.googleapis.com/v1/people/me',
-      onUserInfoFetched);
+      onUserInfoFetched,
+      {
+        "requestMask.includeField": "person.names,person.photos"
+      });
   }
 
   // Code updating the user interface, when the user information has been
@@ -122,9 +127,10 @@ var googlePlusUserLoader = (function() {
 
   function populateUserInfo(user_info) {
     if (!user_info) return;
-    labelWelcome.text('Hello, ' + user_info.names[0] + '!');
+    labelWelcome.text('Hello, ' + user_info.names[0].givenName + '!');
     if (!user_info.photos[0]) return;
     $(document.createElement('img'))
+      .addClass('profile')
       .attr('src', user_info.photos[0].url)
       .appendTo(labelWelcome);
   }
