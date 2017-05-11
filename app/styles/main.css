@@ -22,10 +22,9 @@ body {
   transition: opacity 1s;
 }
 .title {
-  position: fixed;
-  top: 0;
-  left: 0;
-  margin: 24px;
+  text-shadow: #888 1px 1px;
+  font-size: 2.5em;
+  margin-top: 0;
 }
 
 /* Signin button */
@@ -59,6 +58,19 @@ body {
 .projects {
   display: none;
 }
+.projects .lead {
+  margin-top: 0;
+}
+.projects .jumbotron .addProject {
+  font-size: 1.5em;
+  margin-bottom: .5em;
+  margin-left: .5em;
+}
+.projects .jumbotron .promoIcon {
+  width: 48px;
+  height: 48px;
+}
+
 
  /* Progress bar for work items */
 .progressbar {
@@ -81,7 +93,7 @@ body {
   position: fixed;
   top: 0;
   right: 0;
-  margin: 24px;
+  margin: 24px 32px;
 	perspective: 100px;
 }
 .flip-container:hover .flipper, .flip-container.hover .flipper {

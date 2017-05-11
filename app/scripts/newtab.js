@@ -10,7 +10,8 @@ var trackit = (function() {
   var state = STATE_START;
   var userInfo,
     eventList;
-  var buttonSignin,
+  var labelTitle,
+    buttonSignin,
     navMenu,
     welcomeDialog,
     labelWelcome,
@@ -54,12 +55,15 @@ var trackit = (function() {
     state = newState;
     switch (state) {
       case STATE_START:
-        navMenu.fadeOut();
         enableButton(buttonSignin);
         disableButton(buttonLogout);
-        buttonSignin.fadeIn();
-        labelWelcome.text('Welcome to Trackit');
-        welcomeDialog.fadeIn();
+        navMenu.fadeOut();
+        labelTitle.fadeOut(function() {
+          buttonSignin.fadeIn();
+          labelWelcome.text('Welcome to Trackit');
+          welcomeDialog.fadeIn();
+          labelTitle.text('Trackit').fadeIn();
+        });
         break;
       case STATE_ACQUIRING_AUTHTOKEN:
         console.log('Acquiring token...');
@@ -67,10 +71,14 @@ var trackit = (function() {
         // disableButton(buttonSignin);
         break;
       case STATE_AUTHTOKEN_ACQUIRED:
+        labelTitle.fadeOut();
         buttonSignin.fadeOut(function() {
           navMenu.fadeIn();
+          labelTitle.text('Projects')
+            .addClass('lead');
           welcomeDialog.delay(3).fadeOut(function() {
             projectPortfolio.fadeIn();
+            labelTitle.fadeIn();
           });
           enableButton(buttonLogout);
         });
@@ -258,6 +266,7 @@ var trackit = (function() {
     onload: function() {
       lazyloadBackground();
 
+      labelTitle = $('.title');
       navMenu = $('.menu');
       imageProfile = $('.profile');
       buttonSignin = $('.signin');
