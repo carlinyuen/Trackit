@@ -6,8 +6,26 @@
     <script type="text/javascript" src="scripts/onload.js"></script>
     <script type="text/javascript" src="scripts/chromereload.js"></script>
     <script type="text/javascript" src="scripts/background.js"></script>
+
     <script type="text/javascript">
+      var oauth = ChromeExOAuth.initBackgroundPage({
+        'request_url': 'https://www.google.com/accounts/OAuthGetRequestToken',
+        'authorize_url': 'https://www.google.com/accounts/OAuthAuthorizeToken',
+        'access_url': 'https://www.google.com/accounts/OAuthGetAccessToken',
+        'consumer_key': 'anonymous',
+        'consumer_secret': 'anonymous',
+        'scope': 'https://docs.google.com/feeds/',
+        'app_name': 'My Google Docs Extension'
+      });
+      
+      function logout() {
+        docs = [];
+        setIcon({'text': ''});
+        oauth.clearTokens();
+        clearPendingRequests();
+      };
     </script>
+
   </head>
   <body>
   </body>
