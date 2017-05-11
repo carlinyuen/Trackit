@@ -376,6 +376,7 @@ var trackit = (function() {
       <input type="text" class="form-control inputString" placeholder="Drive link, Gmail label name, Buganizer hotlist ID">\
     </div>');
     $('#addInputFields').before(fields);
+    $('.inputSource').last().focus();
   }
 
   // Collect data from addProject form
@@ -391,8 +392,8 @@ var trackit = (function() {
     }
     console.log(sources);
     console.log(strings);
-    for (var i = 0, l = sources.length; i < l - 1; i++, d = {}) {
-      d[sources[i].val()] = strings[i].val();
+    for (var i = 0, l = sources.length, d = {}; i < l - 1; i++, d = {}) {
+      d[sources[i].value] = strings[i].value;
       inputs.push(d);
     }
     console.log(inputs);
