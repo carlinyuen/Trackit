@@ -12,13 +12,16 @@ var trackit = (function() {
   var userInfo
     , eventList;
   // UI objects
-  var labelTitle
+  var navMenu
+    , labelTitle
+    , labelWelcome
     , buttonSignin
     , buttonLogout
     , buttonAddProject
-    , navMenu
+    , buttonAddProjectInput
+    , buttonSubmitAddProjectForm
+    , addProjectForm
     , welcomeDialog
-    , labelWelcome
     , imageProfile
     , projectPortfolio
   ;
@@ -40,7 +43,74 @@ var trackit = (function() {
       return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  // Create and show modal popup with action button
+  // @param content should be html
+  function showModalPopup(content, isConfirm, completionBlock)
+  {
+    // Create background layer
+    $(document.createElement('div'))
+      .addClass('customModal')
+      .hide()
+      .appendTo('body')
+      .fadeIn()
+      .click(function() {
+        $('.popup').fadeOut(function()
+        {
+          $('.popup, .modal').remove();
+          if (completionBlock) {
+            completionBlock(false);
+          }
+        });
+      });
 
+    // Create actual popup
+    $(document.createElement('div'))
+      .addClass('popup')
+      .append($(document.createElement('h2'))
+        .text(chrome.i18n.getMessage('TITLE_WARNING_POPUP'))
+      )
+      .append($(document.createElement('div'))
+        // .html(message.replace(/\n/g, '<br />'))
+        .html(content)
+      )
+      .append($(document.createElement('span'))
+        .css('float', 'right')
+        .css('text-align', 'right')
+        .append($(document.createElement('button'))
+          .attr('type', 'button')
+          .addClass('btn btn-default')
+          .css('display', (isConfirm ? 'inline-block' : 'none'))
+          .text('Cancel')
+          .click(function()
+          {
+            $('.popup').fadeOut(function() {
+              $('.popup, .modal').remove();
+              if (completionBlock) {
+                completionBlock(false);
+              }
+            });
+          })
+        )
+        .append($(document.createElement('button'))
+          .attr('type', 'button')
+          .addClass('btn btn-primary')
+          .css('margin-left', '4px')
+          .text('Ok')
+          .click(function()
+          {
+            $('.popup').fadeOut(function() {
+              $('.popup, .modal').remove();
+              if (completionBlock) {
+                completionBlock(true);
+              }
+            });
+          })
+        )
+      )
+      .hide()
+      .appendTo('body')
+      .fadeIn();
+  }
 
   ////////////////////////////////////////////////
   ////////////////////////////////////////////////
@@ -294,9 +364,30 @@ var trackit = (function() {
     }
   }
 
-  // Create a project and add hooks
-  function showAddProjectDialog() {
+  // Add more input fields for the project
+  function addInputFields() {
+    var fields = ($(document.createElement('div')).addClass('form-group extraInputFields'));
+    fields.html('<div class="col-sm-offset-2 col-sm-10">\
+      <select class="form-control inputSource">\
+        <option>Drive</option>\
+        <option>Gmail</option>\
+        <option>Buganizer</option>\
+      </select>\
+      <input type="text" class="form-control inputString" placeholder="Drive link, Gmail label name, Buganizer hotlist ID">\
+    </div>');
+    $('#addInputFields').before(fields);
+  }
 
+  // Collect data from addProject form
+  function getProjectInputs() {
+    var name = $('#inputName').val();
+    var inputs = [];
+    $.each($(''))
+
+    // Finally remove extra fields
+    $('.extraInputFields').fadeOut(function() {
+      $(this).remove();
+    });
   }
 
 
@@ -305,15 +396,18 @@ var trackit = (function() {
     onload: function() {
       lazyloadBackground();
 
-      labelTitle = $('.title');
       navMenu = $('.menu');
+      labelTitle = $('.title');
       imageProfile = $('.profile');
       buttonSignin = $('.signin');
       buttonLogout = $('.logout');
       welcomeDialog = $('.welcome');
       labelWelcome = $('.welcome .lead');
+      addProjectForm = $('#addProjectForm');
       projectPortfolio = $('.projects');
       buttonAddProject = $('.addProject');
+      buttonAddProjectInput = $('.addProjectInput');
+      buttonSubmitAddProjectForm = $('#submitAddProjectForm');
 
       // Button handlers
       buttonSignin.click(function(e) {
@@ -321,7 +415,14 @@ var trackit = (function() {
         interactiveSignIn(getData);
       });
       buttonLogout.click(revokeToken);
-      buttonAddProject.click(showAddProjectDialog);
+      buttonAddProjectInput.click(addInputFields);
+
+      // Form handler
+      buttonSubmitAddProjectForm.click(function(e) {
+        console.log('add project form submit');
+        $('#modal').modal('hide');
+        getProjectInputs();
+      });
 
       // Fanciness
       $('.flip-container').hover(function() {
