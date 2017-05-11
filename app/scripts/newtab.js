@@ -387,9 +387,21 @@ var trackit = (function() {
       , strings = $('.inputString')
     ;
 
-    if (sources.length != strings.length) {
-      alert('Mismatched fields for inputs, please refresh and try again');
+    // Clear all previous validation errors before moving forward
+    $('.form-group').removeClass('has-error');
+    // Check project name
+    if (!name || name.trim() == "") {
+      $('#inputName').parents('.form-group').addClass('has-error');
     }
+    if (strings.length == 1 && strings[0].value.trim() == "") {
+      strings.parents('.form-group').addClass('has-error');
+    }
+    // Exit early
+    if ($('.form-group').hasClass('has-error')) {
+      return;
+    }
+
+    // Print and parse
     console.log(sources);
     console.log(strings);
     for (var i = 0, l = sources.length, d = {}; i < l - 1; i++, d = {}) {
@@ -397,6 +409,7 @@ var trackit = (function() {
       inputs.push(d);
     }
     console.log(inputs);
+    $('#modal').modal('hide');
 
     var data = {};
     data[name] = inputs;
@@ -446,7 +459,6 @@ var trackit = (function() {
       // Form handler
       buttonSubmitAddProjectForm.click(function(e) {
         console.log('add project form submit');
-        $('#modal').modal('hide');
         addProject();
       });
 
