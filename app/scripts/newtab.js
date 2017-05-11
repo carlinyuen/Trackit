@@ -2,10 +2,12 @@
 
 var googlePlusUserLoader = (function() {
 
-  var STATE_START=1;
-  var STATE_ACQUIRING_AUTHTOKEN=2;
-  var STATE_AUTHTOKEN_ACQUIRED=3;
+  var STATE_START = 1;
+  var STATE_ACQUIRING_AUTHTOKEN = 2;
+  var STATE_AUTHTOKEN_ACQUIRED = 3;
+  var DAYS_IN_ADVANCE = 2;
   var state = STATE_START;
+  var userInfo, eventList;
   var buttonSignin, labelWelcome;
 
   function disableButton(button) {
@@ -33,7 +35,7 @@ var googlePlusUserLoader = (function() {
   }
 
   // Make an authenticated request, checking for token and getting it otherwise.
-  function requestWithAuth(method, url, interactive, callback) {
+  function requestWithAuth(method, url, callback, params) {
     var access_token;
     var retry = true;
 
@@ -41,10 +43,10 @@ var googlePlusUserLoader = (function() {
 
     function getToken() {
       chrome.identity.getAuthToken({
-        interactive: interactive
+        interactive: false
       }, function(token) {
         if (chrome.runtime.lastError) {
-          callback(chrome.runtime.lastError);
+          callback(null);
           return;
         }
 
@@ -58,55 +60,50 @@ var googlePlusUserLoader = (function() {
       $.ajax({
         type: method,
         url: url,
-        headers: {
-          "Authorization": 'Bearer ' + access_token
+        data: params,
+        dataType: 'json',
+        headers: { 'Authorization': 'Bearer ' + access_token },
+        success: callback,
+        error: function() {
+          console.log('FAIL');
+          if (retry) {
+            retry = false;
+            chrome.identity.removeCachedAuthToken({
+              token: access_token
+            }, getToken)
+          } else {
+            callback(null);
+          }
         }
-      }, function(data) {callback(data);})
-        .fail(function() {
-          console.log("FAIL");
-          retry = false;
-          chrome.identity.removeCachedAuthToken({
-            token: access_token
-          }, getToken)
-        });
-      // var xhr = new XMLHttpRequest();
-      // console.log(access_token);
-      // xhr.open(method, url);
-      // xhr.setRequestHeader('Authorization', 'Bearer ' + access_token);
-      // xhr.onload = requestComplete;
-      // xhr.send();
+      });
     }
-
-    // function requestComplete() {
-      // if (this.status == 401 && retry) {
-        // retry = false;
-        // chrome.identity.removeCachedAuthToken({
-        //   token: access_token
-        // }, getToken);
-      // } else {
-        // callback(null, this.status, this.response);
-      // }
-    // }
   }
 
-  function getEvents(interactive) {
-    console.log('getUserInfo:', interactive);
+  function getEvents() {
+    console.log('getEventInfo:');
+    var startDate = new Date(), endDate = new Date();
+    endDate.setDate(endDate.getDate() + DAYS_IN_ADVANCE);
+    endDate.setHours(24,0,0,0);
     requestWithAuth('GET',
       'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-      interactive,
-      onEventsFetched)
+      onEventsFetched,
+      {
+        timeMax: endDate.toISOString(),
+        timeMin: startDate.toISOString(),
+      });
   }
 
   function onEventsFetched(data) {
     console.log('eventsFetched:', data);
-
+    if (data) {
+      eventList = data;
+    }
   }
 
-  function getUserInfo(interactive) {
-    console.log('getUserInfo:', interactive);
+  function getUserInfo() {
+    console.log('getUserInfo:');
     requestWithAuth('GET',
-      'https://www.googleapis.com/plus/v1/people/me',
-      interactive,
+      'https://people.googleapis.com/v1/people/me',
       onUserInfoFetched);
   }
 
@@ -116,6 +113,7 @@ var googlePlusUserLoader = (function() {
     console.log('UserInfoFetched:', data);
     if (data) {
       changeState(STATE_AUTHTOKEN_ACQUIRED);
+      userInfo = data;
       populateUserInfo(data);
     } else {
       changeState(STATE_START);
@@ -124,10 +122,10 @@ var googlePlusUserLoader = (function() {
 
   function populateUserInfo(user_info) {
     if (!user_info) return;
-    labelWelcome.text('Hello, ' + user_info.displayName + '!');
-    if (!user_info.image || !user_info.image.url) return;
+    labelWelcome.text('Hello, ' + user_info.names[0] + '!');
+    if (!user_info.photos[0]) return;
     $(document.createElement('img'))
-      .attr('src', user_info.image.url)
+      .attr('src', user_info.photos[0].url)
       .appendTo(labelWelcome);
   }
 
@@ -172,8 +170,12 @@ var googlePlusUserLoader = (function() {
 
   // Get all relevant information
   function getData() {
-    getUserInfo();
-    getEvents();
+    if (!userInfo) {
+      getUserInfo();
+    }
+    if (!eventList) {
+      getEvents();
+    }
   }
 
   return {
