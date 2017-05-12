@@ -25,6 +25,7 @@ var trackit = (function() {
     , addProjectForm
     , welcomeDialog
     , imageProfile
+    , projectsContainer
     , projectPortfolio
   ;
 
@@ -145,7 +146,7 @@ var trackit = (function() {
           labelTitle.text('Projects')
             .addClass('lead');
           welcomeDialog.delay(3).fadeOut(function() {
-            projectPortfolio.fadeIn();
+            projectsContainer.fadeIn();
             labelTitle.fadeIn();
           });
           enableButton(buttonLogout);
@@ -231,7 +232,6 @@ var trackit = (function() {
         type: method,
         url: url,
         data: params,
-        async: false,
         dataType: 'json',
         headers: { 'Authorization': 'Bearer ' + access_token },
         success: callback,
@@ -322,7 +322,25 @@ var trackit = (function() {
 
   // Load all the data for a project
   function loadProjects() {
+    console.log('loadProjects');
     // Render the basic list
+    $.each(projects, function(name, proj) {
+      console.log(name, proj);
+      var el = $(document.createElement('div'))
+        .addClass('project row')
+        .append($(document.createElement('h3'))
+          .addClass('projectName col-md-2')
+          .append($(document.createElement('span'))
+            .addClass('label label-' + proj.color)
+            .text(name)
+          )
+          .append($(document.createElement('button'))
+            .addClass('removeProject btn btn-xs')
+            .html('<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>')
+          )
+        )
+      projectPortfolio.append(el);
+    });
   }
 
   // Setup progressbars
@@ -543,7 +561,7 @@ var trackit = (function() {
   // Collect data from addProject form
   function getProjectInputs() {
     var name = $('#inputName').val();
-    var color = $('#inputColor').text().trim().toLowerCase();
+    var color = $('#inputColor').val().trim().toLowerCase();
     var inputs = []
       , sources = $('.inputSource')
       , strings = $('.inputString')
@@ -578,8 +596,10 @@ var trackit = (function() {
     $('#modal').modal('hide');
 
     var data = {};
-    data[name] = inputs;
-    data["color"] = color;
+    data[name] = {
+      inputs: inputs,
+      color: color
+    };
     return data;
   }
 
@@ -622,7 +642,8 @@ var trackit = (function() {
       welcomeDialog = $('.welcome');
       labelWelcome = $('.welcome .lead');
       addProjectForm = $('#addProjectForm');
-      projectPortfolio = $('.projects');
+      projectsContainer = $('.projects');
+      projectPortfolio = $('.portfolio');
       buttonAddProject = $('.addProject');
       buttonAddProjectInput = $('.addProjectInput');
       buttonSubmitAddProjectForm = $('#submitAddProjectForm');
@@ -684,6 +705,8 @@ var trackit = (function() {
       getProjects(function(data) {
         if (!data) {
           $('.zerostate').fadeIn();
+        } else {
+          loadProjects();
         }
       });
       getData();
