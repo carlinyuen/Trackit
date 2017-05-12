@@ -210,7 +210,7 @@ var trackit = (function() {
         interactive: interactive
       }, function(token) {
         if (chrome.runtime.lastError) {
-          console.log(chrome.runtime.lastError);
+          console.log('requestWithAuth:', chrome.runtime.lastError);
           if (callback) {
             callback(null);
           }
@@ -393,8 +393,10 @@ var trackit = (function() {
       $('.events .previous .panel-title')
         .append($(document.createElement('a'))
           .attr('href', prev.htmlLink)
+          .attr('target', '_blank')
           .text(prev.summary)
         ).append($(document.createElement('small'))
+          .addClass('pull-right')
           .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
         );
     } else {
@@ -402,19 +404,74 @@ var trackit = (function() {
     }
     if (upcoming) {
       upcomingEnd = new Date(Date.parse(upcoming.end.dateTime));
-      $('.events .upcoming .panel-title')
+      var $e = $('.events .upcoming');
+
+      // Header
+      $e.find('.panel-title')
         .append($(document.createElement('a'))
           .attr('href', upcoming.htmlLink)
+          .attr('target', '_blank')
           .text(upcoming.summary)
         ).append($(document.createElement('small'))
+          .addClass('pull-right')
           .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
-        );
+        )
+      ;
+
+      // Hangouts link
+      if (upcoming.hangoutLink) {
+        var el = $(document.createElement('div'))
+          .addClass('pull-right')
+          .append($(document.createElement('span'))
+            .addClass('alert-success glyphicon glyphicon-facetime-video')
+          ).append($(document.createElement('a'))
+            .attr('href', upcoming.hangoutLink)
+            .attr('target', '_blank')
+            .text(' Hangouts link')
+          )
+        ;
+        $e.find('.panel-body').append(el);
+      }
+
+      // Description
+      if (upcoming.description) {
+        var el = $(document.createElement('p'))
+          .text(upcoming.description);
+        $e.find('.panel-body').append(el);
+      }
+
+      // Attachments
+      if (upcoming.attachments) {
+        var el = $(document.createElement('div'))
+          .addClass('attachments');
+        $.each(upcoming.attachments, function(i, obj) {
+          $(document.createElement('div'))
+            .addClass('file')
+            .attr('data-fileID', obj.fileId)
+            .append($(document.createElement('a'))
+              .attr('href', obj.fileUrl)
+              .attr('target', '_blank')
+              .text(' ' + obj.title)
+              .prepend($(document.createElement('img'))
+                .attr('src', obj.iconLink)
+              )
+            )
+            .appendTo(el);
+        });
+        $e.find('.panel-body').append(el);
+        fetchBadgesForFile(obj.fileId);
+      }
     } else {
       $('.events .upcoming').fadeOut();
     }
 
     // Show UI
     $('.events').fadeIn();
+  }
+
+  // Get badges for a file to show
+  function fetchBadgesForFile(fileID) {
+
   }
 
   // Populate progressbar
@@ -451,6 +508,7 @@ var trackit = (function() {
   // Collect data from addProject form
   function getProjectInputs() {
     var name = $('#inputName').val();
+    var color = $('#inputColor').text().trim().toLowerCase();
     var inputs = []
       , sources = $('.inputSource')
       , strings = $('.inputString')
@@ -459,10 +517,10 @@ var trackit = (function() {
     // Clear all previous validation errors before moving forward
     $('.form-group').removeClass('has-error');
     // Check project name
-    if (!name || name.trim() == "") {
+    if (!name || name.trim() == '') {
       $('#inputName').parents('.form-group').addClass('has-error');
     }
-    if (strings.length == 1 && strings[0].value.trim() == "") {
+    if (strings.length == 1 && strings[0].value.trim() == '') {
       strings.parents('.form-group').addClass('has-error');
     }
     // Exit early
@@ -482,6 +540,7 @@ var trackit = (function() {
 
     var data = {};
     data[name] = inputs;
+    data["color"] = color;
     return data;
   }
 
@@ -520,7 +579,8 @@ var trackit = (function() {
       // Button handlers
       buttonSignin.click(function(e) {
         e.preventDefault();
-        interactiveSignIn(getData);
+        interactiveSignIn();
+        getData();
       });
       buttonLogout.click(revokeToken);
       buttonAddProjectInput.click(addInputFields);
@@ -529,6 +589,38 @@ var trackit = (function() {
       buttonSubmitAddProjectForm.click(function(e) {
         console.log('add project form submit');
         addProject();
+      });
+
+      // Feedback rating interactions
+      $('.feedback .rating').hover(function() {
+        var $t = $(this);
+        $t.prevAll().addBack().each(function(i, el) {
+          var $el = $(el);
+          $el.addClass('glyphicon-star');
+          $el.removeClass('glyphicon-star-empty');
+        });
+        $t.nextAll()
+          .removeClass('glyphicon-star')
+          .addClass('glyphicon-star-empty');
+      }, function() {
+        $('.feedback .rating').each(function(i, el) {
+          var $el = $(el);
+          if ($el.hasClass('selected')) {
+            $el.addClass('glyphicon-star');
+            $el.removeClass('glyphicon-star-empty');
+          } else {
+            $el.removeClass('glyphicon-star');
+            $el.addClass('glyphicon-star-empty');
+          }
+        });
+      }).on('click', function() {
+        var $t = $(this);
+        $t.prevAll().addBack()
+          .addClass('selected glyphicon-star')
+          .removeClass('glyphicon-star-empty');
+        $t.nextAll()
+          .removeClass('selected glyphicon-star')
+          .addClass('glyphicon-star-empty');
       });
 
       // Fanciness
