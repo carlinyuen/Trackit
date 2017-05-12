@@ -12,7 +12,7 @@ var trackit = (function() {
   // Gangster cache for data
   var userInfo
     , eventList
-    , projects;
+    , projectsList;
   // UI objects
   var navMenu
     , labelTitle
@@ -87,7 +87,7 @@ var trackit = (function() {
           .click(function()
           {
             $('.popup').fadeOut(function() {
-              $('.popup, .modal').remove();
+              $('.popup, .customModal').remove();
               if (completionBlock) {
                 completionBlock(false);
               }
@@ -102,7 +102,7 @@ var trackit = (function() {
           .click(function()
           {
             $('.popup').fadeOut(function() {
-              $('.popup, .modal').remove();
+              $('.popup, .customModal').remove();
               if (completionBlock) {
                 completionBlock(true);
               }
@@ -307,14 +307,15 @@ var trackit = (function() {
     {
       if (chrome.runtime.lastError) {	// Check for errors
         console.log(chrome.runtime.lastError);
-        // Only warn if we don't have any access to projects at all
-        if (!projects) {
           alert('Error retrieving projects!');
-        }
+        callback(null);
         return;
       }
 
-      projects = data;
+      if (!Object.keys(data).length) {
+        data = null;
+      }
+      projectsList = data;
       console.log('projects:', data);
       callback(data);
     });
@@ -323,11 +324,17 @@ var trackit = (function() {
   // Load all the data for a project
   function loadProjects() {
     console.log('loadProjects');
+
+    // Clear list
+    $('.project').remove();
+    console.log('PROCESSING:', projectsList);
+
     // Render the basic list
-    $.each(projects, function(name, proj) {
+    $.each(projectsList, function(name, proj) {
       console.log(name, proj);
       var el = $(document.createElement('div'))
         .addClass('project row')
+        .attr('data-projectid', name)
         .append($(document.createElement('h3'))
           .addClass('projectName col-md-2')
           .append($(document.createElement('span'))
@@ -337,9 +344,32 @@ var trackit = (function() {
           .append($(document.createElement('button'))
             .addClass('removeProject btn btn-xs')
             .html('<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>')
+            .click(function() {
+              var projectID = $(this).parents('.project').attr('data-projectid');
+              showModalPopup('Are you sure you want to remove this project?', true, function(confirm) {
+                if (confirm) {
+                  removeProject(projectID);
+                }
+              });
+            })
           )
         )
       projectPortfolio.append(el);
+    });
+  }
+
+  // Remove a project
+  function removeProject(projectIDs) {
+    console.log('removeProject:', projectIDs);
+
+    // Remove specific project
+    chrome.storage.sync.remove(projectIDs, function() {
+      if (chrome.runtime.lastError) {	// Check for errors
+        console.log(chrome.runtime.lastError);
+        alert('Could not remove project. Please refresh.');
+        return;
+      }
+      loadProjects();
     });
   }
 
@@ -441,8 +471,7 @@ var trackit = (function() {
           .attr('href', prev.htmlLink)
           .attr('target', '_blank')
           .text(prev.summary)
-        ).append($(document.createElement('small'))
-          .addClass('pull-right')
+        ).append('<br>').append($(document.createElement('small'))
           .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
         );
     } else {
@@ -458,8 +487,7 @@ var trackit = (function() {
           .attr('href', upcoming.htmlLink)
           .attr('target', '_blank')
           .text(upcoming.summary)
-        ).append($(document.createElement('small'))
-          .addClass('pull-right')
+        ).append('<br>').append($(document.createElement('small'))
           .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
         )
       ;
@@ -576,7 +604,7 @@ var trackit = (function() {
     if (strings.length == 1 && strings[0].value.trim() == '') {
       strings.parents('.form-group').addClass('has-error');
     }
-    if (projects && projects[name]) {
+    if (projectsList && projectsList[name]) {
       $('#inputName').parents('.form-group').addClass('has-error');
       alert('Project name already exists.');
     }
@@ -595,8 +623,8 @@ var trackit = (function() {
     console.log(inputs);
     $('#modal').modal('hide');
 
-    var data = {};
-    data[name] = {
+    var data = {
+      name: name,
       inputs: inputs,
       color: color
     };
@@ -610,22 +638,40 @@ var trackit = (function() {
     });
   }
 
-  // Add new project
-  function addProject() {
-    var data = getProjectInputs();
-    console.log('addProject:', data);
-
+  // Save fresh projects data -- includes all project data
+  function updateProjectsData(data, callback) {
+    console.log('updateProjectsData:', data);
     // Save data into storage
     chrome.storage.sync.set(data, function()
     {
       if (chrome.runtime.lastError) {
         console.log(chrome.runtime.lastError);
-        alert('There was an error saving your project. :( Please refresh and try again.');
+        alert('There was an error saving your projects. :(');
+        if (callback) {
+          callback(false);
+        }
       }
-      else	// Success! Data saved
-      {
-        loadProjects();
+      else {
+        if (callback) {
+          callback(true);
+        }
       }
+    });
+  }
+
+  // Add new project
+  function addProject() {
+    var data = getProjectInputs();
+    console.log('addProject:', data);
+
+    // Get latest projects
+    getProjects(function(allProjects) {
+      // If DNE, create
+      if (!allProjects) {
+        allProjects = {};
+      }
+      allProjects[data.name] = data
+      updateProjectsData(allProjects, loadProjects);
     });
   }
 
