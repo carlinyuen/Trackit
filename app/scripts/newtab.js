@@ -307,7 +307,7 @@ var trackit = (function() {
     {
       if (chrome.runtime.lastError) {	// Check for errors
         console.log(chrome.runtime.lastError);
-          alert('Error retrieving projects!');
+        alert('Error retrieving projects!');
         callback(null);
         return;
       }
