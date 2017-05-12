@@ -7,10 +7,12 @@ var trackit = (function() {
   var STATE_AUTHTOKEN_ACQUIRED = 3;
   var DAYS_IN_ADVANCE = 2;
   var PATH_BACKGROUNDS = 'images/backgrounds/'
+  var DRIVE_THUMBNAIL_PATH = 'https://lh3.google.com/u/0/d/';
   var state = STATE_START;
   // Gangster cache for data
   var userInfo
-    , eventList;
+    , eventList
+    , projects;
   // UI objects
   var navMenu
     , labelTitle
@@ -229,6 +231,7 @@ var trackit = (function() {
         type: method,
         url: url,
         data: params,
+        async: false,
         dataType: 'json',
         headers: { 'Authorization': 'Bearer ' + access_token },
         success: callback,
@@ -295,6 +298,31 @@ var trackit = (function() {
     } else {
       changeState(STATE_START);
     }
+  }
+
+  // Get current project list
+  function getProjects(callback) {
+    // Fetch from chrome extension sync storage
+    chrome.storage.sync.get(null, function(data)
+    {
+      if (chrome.runtime.lastError) {	// Check for errors
+        console.log(chrome.runtime.lastError);
+        // Only warn if we don't have any access to projects at all
+        if (!projects) {
+          alert('Error retrieving projects!');
+        }
+        return;
+      }
+
+      projects = data;
+      console.log('projects:', data);
+      callback(data);
+    });
+  }
+
+  // Load all the data for a project
+  function loadProjects() {
+    // Render the basic list
   }
 
   // Setup progressbars
@@ -448,18 +476,25 @@ var trackit = (function() {
           $(document.createElement('div'))
             .addClass('file')
             .attr('data-fileID', obj.fileId)
-            .append($(document.createElement('a'))
-              .attr('href', obj.fileUrl)
-              .attr('target', '_blank')
-              .text(' ' + obj.title)
-              .prepend($(document.createElement('img'))
-                .attr('src', obj.iconLink)
+            .append($(document.createElement('img'))
+              .addClass('thumbnail')
+              .attr('src', DRIVE_THUMBNAIL_PATH + obj.fileId)
+            )
+            .append($(document.createElement('span'))
+              .addClass('fileTitle')
+              .append($(document.createElement('a'))
+                .attr('href', obj.fileUrl)
+                .attr('target', '_blank')
+                .text(' ' + obj.title)
+                .prepend($(document.createElement('img'))
+                  .attr('src', obj.iconLink)
+                )
               )
             )
             .appendTo(el);
+          fetchBadgesForFile(obj.fileId);  // Async get badges
         });
         $e.find('.panel-body').append(el);
-        fetchBadgesForFile(obj.fileId);
       }
     } else {
       $('.events .upcoming').fadeOut();
@@ -517,11 +552,15 @@ var trackit = (function() {
     // Clear all previous validation errors before moving forward
     $('.form-group').removeClass('has-error');
     // Check project name
-    if (!name || name.trim() == '') {
+    if (!name || name == '') {
       $('#inputName').parents('.form-group').addClass('has-error');
     }
     if (strings.length == 1 && strings[0].value.trim() == '') {
       strings.parents('.form-group').addClass('has-error');
+    }
+    if (projects && projects[name]) {
+      $('#inputName').parents('.form-group').addClass('has-error');
+      alert('Project name already exists.');
     }
     // Exit early
     if ($('.form-group').hasClass('has-error')) {
@@ -555,8 +594,20 @@ var trackit = (function() {
   function addProject() {
     var data = getProjectInputs();
     console.log('addProject:', data);
-  }
 
+    // Save data into storage
+    chrome.storage.sync.set(data, function()
+    {
+      if (chrome.runtime.lastError) {
+        console.log(chrome.runtime.lastError);
+        alert('There was an error saving your project. :( Please refresh and try again.');
+      }
+      else	// Success! Data saved
+      {
+        loadProjects();
+      }
+    });
+  }
 
 
   return {
@@ -630,6 +681,11 @@ var trackit = (function() {
         $(this).removeClass('hover');
       });
 
+      getProjects(function(data) {
+        if (!data) {
+          $('.zerostate').fadeIn();
+        }
+      });
       getData();
     }
   };
