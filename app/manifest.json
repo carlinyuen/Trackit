@@ -2,7 +2,13 @@
   "name": "__MSG_appName__",
   "version": "0.0.1",
   "manifest_version": 2,
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAik7t60hI7y1MBCiuULeHAK2ctY+5UbKn8EeIvl5nvx0n5Ab2F95nSfOS8XU6GUY6kejFBtTJQGHVZEmPpRYRM1ZFS7EeTPziybGzxDxZfXACrEXcTu/0g7CQa7Q1+88tWmyyozVHF7vLeT6T839K3UgFs0ubAVGBBpKdIqKMZt+Cd4BZ/OZrb+O71depJyRutiS4ejlevqAC44XxSPYDLeC5duaH6XHPrAduAeuKUUvTGpA/Q/inihTwhGcWlUv8/knWmZu9liugYX13aLTDjm59CaUs7t41LL17HUWbjRQfjYMSAnPgMhoIaqR87TAoxcEv2nE35+QXNn2aKtWkpwIDAQAB",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAik7t60hI7y1MBCiuULeH
+AK2ctY+5UbKn8EeIvl5nvx0n5Ab2F95nSfOS8XU6GUY6kejFBtTJQGHVZEmPpRYR
+M1ZFS7EeTPziybGzxDxZfXACrEXcTu/0g7CQa7Q1+88tWmyyozVHF7vLeT6T839K
+3UgFs0ubAVGBBpKdIqKMZt+Cd4BZ/OZrb+O71depJyRutiS4ejlevqAC44XxSPYD
+LeC5duaH6XHPrAduAeuKUUvTGpA/Q/inihTwhGcWlUv8/knWmZu9liugYX13aLTD
+jm59CaUs7t41LL17HUWbjRQfjYMSAnPgMhoIaqR87TAoxcEv2nE35+QXNn2aKtWk
+pwIDAQAB",
   "description": "__MSG_appDescription__",
   "icons": {
     "16": "images/icon-16.png",
@@ -61,6 +67,7 @@
   },
   "web_accessible_resources": [
   ],
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://apis.google.com; object-src 'self'",
   "oauth2": {
     "client_id": "26398682427-3qaoo84dciq63ohj46l9dq8gfjqc6r6o.apps.googleusercontent.com",
     "scopes": [
