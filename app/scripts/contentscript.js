@@ -35,6 +35,9 @@ jQuery.noConflict();
     , SPOTLIGHT_INPUT = '*[contenteditable=true],textarea,input'
     , SPOTLIGHT_SHORTCUT = 'ctrl+space'
     , SPOTLIGHT_CLASS = 'trackit-spotlight'
+    , SPOTLIGHT_SELECTOR = '.' + SPOTLIGHT_CLASS
+    , SPOTLIGHT_INPUT_CLASS = 'trackit-spotlight-input'
+    , SPOTLIGHT_INPUT_SELECTOR = '.' + SPOTLIGHT_INPUT_CLASS
   ;
 
   var typingBuffer = [];		// Keep track of what's been typed before timeout
@@ -55,23 +58,37 @@ jQuery.noConflict();
   function activateSpotlight(event) {
     debugLog('activateSpotlight()');
 
+    // Check if there's already a spotlight bar, and if so, just focus
+    if ($(SPOTLIGHT_INPUT_SELECTOR).length > 0) {
+      $(SPOTLIGHT_INPUT_SELECTOR).focus();
+    } else {
+      addSpotlightBar('body');
+    }
+  }
+
+  // Add spotlight bar to element
+  //  param: elementSelector should be a string
+  function addSpotlightBar(elementSelector) {
     var d = document;
-    var $d = $(document);
     $(d.createElement('form'))
       .addClass(SPOTLIGHT_CLASS)
       .append($(d.createElement('input'))
+        .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER'))
-        .focus()
         .on(EVENT_NAME_BLUR, hideSpotlight)
       )
-      .appendTo('body');
+      .hide()
+      .appendTo(elementSelector)
+      .fadeIn(ANIMATION_FAST, function() {
+        $(SPOTLIGHT_INPUT_SELECTOR).focus();
+      });
   }
 
   // Hide the spotlight bar
   function hideSpotlight(callback) {
-    $(SPOTLIGHT_CLASS).fadeOut(ANIMATION_FAST, function() {
-      $(SPOTLIGHT_CLASS).remove();
+    $(SPOTLIGHT_SELECTOR).fadeOut(ANIMATION_FAST, function() {
+      $(SPOTLIGHT_SELECTOR).remove();
 
       // Call callback if it is a function
       if (callback && typeof(callback) === 'function') {

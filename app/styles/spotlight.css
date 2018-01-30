@@ -1,228 +1,60 @@
-html {
-  height: 100%;
-}
-body {
-  padding: 20px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-.background {
-  position: absolute;
-  z-index:-1;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #000 center center no-repeat;
-  background-size: cover;
-  opacity: 0;
-  transition: opacity 1s;
-}
-.title {
-  text-shadow: #888 1px 1px;
-  font-size: 2.5em;
-  margin-top: 0;
+.trackit-spotlight {
+	width: 450px;
+	padding: 8px;
+	margin: 100px auto;
+	overflow: hidden;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #dedede #bababa #aaa #bababa;
+	-moz-box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 5px 5px #444;
+	-webkit-box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 5px 5px #444;
+	box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 5px 5px #444;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	background-color: #f6f6f6;
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#f6f6f6), to(#eae8e8));
+	background-image: -webkit-linear-gradient(top, #f6f6f6, #eae8e8);
+	background-image: -moz-linear-gradient(top, #f6f6f6, #eae8e8);
+	background-image: -ms-linear-gradient(top, #f6f6f6, #eae8e8);
+	background-image: -o-linear-gradient(top, #f6f6f6, #eae8e8);
+	background-image: linear-gradient(top, #f6f6f6, #eae8e8);
 }
 
-/* Signin button */
-.welcome {
-  display: none;
-  text-align: center;
-  position: fixed;
-  top: 45%;
-}
-.welcome .lead {
-  font-size: 4em;
-  color: white;
-  text-shadow: #222 2px 2px;
-}
-.signin {
-  padding: 1em 3em;
-  font-size: 18px;
-}
-.signin .googleLogo {
-  background: transparent url('chrome-extension://__MSG_@@extension_id__/images/icon-google.png') center center no-repeat;
-  width: 16px;
-  height: 20px;
-}
-
-/* Logout button */
-.menu .logout.close {
-  background: #ddd;
-}
-
-/* Events */
-.events {
-  display: none;
-  width: 40%;
-  max-width: 480px;
-}
-@media screen and (max-width: 500px) {
-  .events {
-    width: 100%;
-  }
-}
-.events .previous {
-  opacity: 0.7;
-  transition: opacity 0.5s;
-}
-.events .previous:hover {
-  opacity: 1;
-}
-.events .upcoming {
-}
-.events .thumbnail {
-  max-width: 100%;
-  max-height: 120px;;
-  margin-bottom: 8px;
-}
-.events .file {
-  width: 120px;
-  height: 160px;
-}
-.events .file .fileTitle {
-  text-overflow: ellipsis;
-}
-.events .feedback {
-  text-align: center;
-  padding: 0;
-}
-
-/* Projects section */
-.projects {
-  display: none;
-  width: 50%;
-  max-width: 600px;
-}
-@media screen and (min-aspect-ratio: 8/5) {
-  .projects.list {
-    min-width: 520px;
-    width: 33%;
-  }
-}
-@media screen and (max-width: 500px) {
-  .projects {
-    width: 100%;
-  }
-}
-.projects .zerostate {
-  display: none;
-}
-.projects .jumbotron .addProject {
-  font-size: 1.5em;
-  margin-bottom: .5em;
-  margin-left: .5em;
-}
-.projects .jumbotron .promoIcon {
-  width: 24px;
-  height: 24px;
-  opacity: 0.7;
-}
-
-/* Popup and modals */
-.popup {
-	z-index: 2;
-	position: fixed;
-	top: 20%;
-	left: 50%;
-	margin: 36px 0 36px -160px;
-	padding: 16px;
-	width: 320px;
-	font: normal 13px/18px Verdana;
-	color: #444;
-	background: #fff;
-	box-shadow: 0px 4px 12px #444;
+.trackit-spotlight .trackit-spotlight-input {
+	width: 330px;
+	height: 20px;
+	padding: 10px 5px;
+	float: left;
+	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
+	border: 1px solid #ccc;
+	-moz-box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+	-webkit-box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+	box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
 	border-radius: 3px;
-	overflow: auto;
-	max-height: 80%;
-}
-.popup.port {
-	top: 5%;
-}
-.popup h2 {
-	margin: 4px 0 6px;
-}
-.popup p {
-	text-align: left;
-	overflow: auto;
-	width: 100%;
-}
-.popup textarea {
-	margin-bottom: 8px;
-	min-height: 256px;
-}
-.customModal {
-	position: fixed;
-	bottom: 0;
-	top: 0;
-	left: 0;
-	right: 0;
-	background-color: #000;
-	z-index: 1;
-	opacity: 0.33;
 }
 
-
- /* Progress bar for work items */
-.progressbar {
-  height: 24px;
+.trackit-spotlight .trackit-spotlight-input:focus {
+	outline: 0;
+	border-color: #aaa;
+	-moz-box-shadow: 0 1px 1px #bbb inset;
+	-webkit-box-shadow: 0 1px 1px #bbb inset;
+	box-shadow: 0 1px 1px #bbb inset;
 }
 
-/* Profile pictures */
-.profile {
-  width: 48px;
-  height: 48px;
-  opacity: 0;
-  transition: opacity 1s;
-  background: transparent center center no-repeat;
-  background-size: contain;
-  filter: invert(1);
+.trackit-spotlight .trackit-spotlight-input::-webkit-input-placeholder {
+   color: #999;
+   font-weight: normal;
 }
 
-/* Flipping transform fun */
-.flip-container {
-  position: fixed;
-  top: 0;
-  right: 0;
-  margin: 24px 32px;
-	perspective: 100px;
-}
-.flip-container:hover .flipper, .flip-container.hover .flipper {
-  transform: rotateY(180deg);
-}
-.flip-container, .front, .back {
-	width: 48px;
-	height: 48px;
-  border-radius: 50%;
-}
-.flipper {
-	transition: 0.6s;
-	transform-style: preserve-3d;
-	position: relative;
-}
-.front, .back {
-	backface-visibility: hidden;
-	position: absolute;
-	top: 0;
-	left: 0;
-}
-.front {
-	z-index: 2;
-	transform: rotateY(0deg);
-}
-.back {
-	transform: rotateY(180deg);
+.trackit-spotlight .trackit-spotlight-input:-moz-placeholder {
+	color: #999;
+	font-weight: normal;
 }
 
-
-/* Special states of UI */
-.loaded {
-  opacity: 1;
-}
-.blur {
-  filter: blur(50px);
-  transform: scale(1);
+.trackit-spotlight .trackit-spotlight-input:-ms-input-placeholder {
+  color: #999;
+  font-weight: normal;
 }
