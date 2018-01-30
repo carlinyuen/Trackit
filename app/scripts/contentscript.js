@@ -83,7 +83,7 @@ jQuery.noConflict();
       .append($(d.createElement('input'))
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
-        .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER'))
+        .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
         // .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .hide()
@@ -157,9 +157,12 @@ jQuery.noConflict();
         var $target = $(SPOTLIGHT_SELECTOR);
         if ($target.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
           $target.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
+            .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
           debugLog('removed type data attr');
         } else if ($target.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
-          $target.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
+          $target.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR)
+            .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'));
+
           debugLog('removed project data attr');
         }
       }
@@ -186,39 +189,46 @@ jQuery.noConflict();
     shortcut = shortcut.toUpperCase();
 
     switch (shortcut) {
-
-      // Action item
-      case 'A: ':
-        $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
-        replaceTextRegular(shortcut.trim(), '', textInput);
-        break;
-
-      // Decision
-      case 'D: ':
-        $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
-        replaceTextRegular(shortcut.trim(), '', textInput);
-        break;
-
-      // Project
-      case '#ENGAGE ':
-        $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_E);
-        replaceTextRegular(shortcut.trim(), '', textInput);
-        break;
-
-      // Project
+      case 'A: ': // Action item
+      case 'D: ': // Decision
+      case '#ENGAGE ': // Project tag
       case '#COLLAB ':
-        $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_C);
-        replaceTextRegular(shortcut.trim(), '', textInput);
-        break;
-
-      // Project
       case '#HUDDLE ':
-        $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_H);
-        replaceTextRegular(shortcut.trim(), '', textInput);
-        break;
+      {
+        // Update data attribute
+        switch (shortcut) {
+          case 'A: ': // Action item
+            $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
+            break;
+          case 'D: ': // Decision
+            $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
+            break;
+          case '#ENGAGE ': // Project
+            $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_E);
+            break;
+          case '#COLLAB ':
+            $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_C);
+            break;
+          case '#HUDDLE ':
+            $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_H);
+            break;
+        }
 
-      default:
-        // do nothing
+        // Replace text in the input field
+        replaceTextRegular(shortcut.trim(), '', textInput);
+
+        // Update placeholder text to guide users
+        var hasType = $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)
+          , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
+        if (hasType && hasProject) {
+          textInput.setAttribute('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_BOTH'));
+        } else if (hasType) {
+          textInput.setAttribute('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_TYPE'));
+        } else if (hasProject) {
+          textInput.setAttribute('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
+        }
+      }
+      break;
     }
 
     // If last character is whitespace, clear buffer

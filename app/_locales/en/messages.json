@@ -7,9 +7,21 @@
     "message": "Trackit",
     "description": "The description of the application"
   },
-  "SPOTLIGHT_PLACEHOLDER": {
-    "message": "Type \"A:\" or \"D:\" to capture an action item or decision.",
+  "SPOTLIGHT_PLACEHOLDER_ZERO": {
+    "message": "Try \"A:\" or \"D:\" or \"#engage\" or \"#collab\".",
     "description": "Placeholder text that goes into the spotlight structured input bar"
+  },
+  "SPOTLIGHT_PLACEHOLDER_PROJECT": {
+    "message": "Now try \"A:\" or \"D:\" to add an AI or decision to that project.",
+    "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
+  },
+  "SPOTLIGHT_PLACEHOLDER_TYPE": {
+    "message": "Nice! Try \"#engage\" or \"#collab\" to easily group with a project.",
+    "description": "Placeholder text that goes into the spotlight structured input bar after a data type has been entered to guide users"
+  },
+  "SPOTLIGHT_PLACEHOLDER_BOTH": {
+    "message": "Now finish capturing your thought!",
+    "description": "Placeholder text that goes into the spotlight structured input bar after both a project and data type are entered"
   },
   "KEYWORD_OMNIBAR_TRIGGER": {
 		"message": "AI",
