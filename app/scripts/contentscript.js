@@ -156,7 +156,7 @@ jQuery.noConflict();
       if (event.target.value === '') {
         var $target = $(SPOTLIGHT_SELECTOR);
         if ($target.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
-          $target.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
+          $target.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR)
             .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
           debugLog('removed type data attr');
         } else if ($target.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
