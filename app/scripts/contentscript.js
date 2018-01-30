@@ -68,7 +68,9 @@ jQuery.noConflict();
 
     // Check if there's already a spotlight bar, and if so, just focus
     if ($(SPOTLIGHT_INPUT_SELECTOR).length > 0) {
-      $(SPOTLIGHT_INPUT_SELECTOR).focus().fadeIn(ANIMATION_FAST);
+      $(SPOTLIGHT_SELECTOR).fadeIn(ANIMATION_FAST, function() {
+        $(SPOTLIGHT_INPUT_SELECTOR).focus();
+      });
     } else {
       addSpotlightBar('body');
     }
@@ -84,7 +86,7 @@ jQuery.noConflict();
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
-        // .on(EVENT_NAME_BLUR, hideSpotlight)
+        .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .hide()
       .appendTo(elementSelector)
@@ -154,17 +156,15 @@ jQuery.noConflict();
 
       // Clear data type if backspacing on empty field
       if (event.target.value === '') {
-        var $target = $(SPOTLIGHT_SELECTOR);
-        if ($target.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
-          $target.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR)
-            .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
+        var $spotlight = $(SPOTLIGHT_SELECTOR);
+        if ($spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
+          $spotlight.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
           debugLog('removed type data attr');
-        } else if ($target.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
-          $target.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR)
-            .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'));
-
+        } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
+          $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
           debugLog('removed project data attr');
         }
+        updateSpotlightPlaceholderText();
       }
     }
 
@@ -191,9 +191,9 @@ jQuery.noConflict();
     switch (shortcut) {
       case 'A: ': // Action item
       case 'D: ': // Decision
-      case '#ENGAGE ': // Project tag
-      case '#COLLAB ':
-      case '#HUDDLE ':
+      case '#E ': // Project tag
+      case '#C ':
+      case '#H ':
       {
         // Update data attribute
         switch (shortcut) {
@@ -203,30 +203,20 @@ jQuery.noConflict();
           case 'D: ': // Decision
             $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
             break;
-          case '#ENGAGE ': // Project
+          case '#E ': // Project
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_E);
             break;
-          case '#COLLAB ':
+          case '#C ':
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_C);
             break;
-          case '#HUDDLE ':
+          case '#H ':
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_H);
             break;
         }
 
         // Replace text in the input field
         replaceTextRegular(shortcut.trim(), '', textInput);
-
-        // Update placeholder text to guide users
-        var hasType = $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)
-          , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
-        if (hasType && hasProject) {
-          textInput.setAttribute('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_BOTH'));
-        } else if (hasType) {
-          textInput.setAttribute('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_TYPE'));
-        } else if (hasProject) {
-          textInput.setAttribute('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
-        }
+        updateSpotlightPlaceholderText();
       }
       break;
     }
@@ -234,6 +224,24 @@ jQuery.noConflict();
     // If last character is whitespace, clear buffer
     if (WHITESPACE_REGEX.test(lastChar)) {
       clearTypingBuffer();
+    }
+  }
+
+  // Update placeholder text to guide users based on state
+  function updateSpotlightPlaceholderText() {
+    var $spotlight = $(SPOTLIGHT_SELECTOR);
+    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
+    var hasType = $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)
+    , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
+
+    if (hasType && hasProject) {
+      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_BOTH'));
+    } else if (hasType) {
+      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_TYPE'));
+    } else if (hasProject) {
+      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
+    } else {
+      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'));
     }
   }
 

@@ -8,7 +8,7 @@
     "description": "The description of the application"
   },
   "SPOTLIGHT_PLACEHOLDER_ZERO": {
-    "message": "Try \"A:\" or \"D:\" or \"#engage\" or \"#collab\".",
+    "message": "Try \"A:\" or \"D:\" or \"#E\" or \"#C\" or \"#H\".",
     "description": "Placeholder text that goes into the spotlight structured input bar"
   },
   "SPOTLIGHT_PLACEHOLDER_PROJECT": {
@@ -16,7 +16,7 @@
     "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_TYPE": {
-    "message": "Nice! Try \"#engage\" or \"#collab\" to easily group with a project.",
+    "message": "Nice! Try \"#E\" or \"#C\" to easily group with a project.",
     "description": "Placeholder text that goes into the spotlight structured input bar after a data type has been entered to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_BOTH": {
