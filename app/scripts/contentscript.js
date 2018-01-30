@@ -1,3 +1,715 @@
 'use strict';
 
-console.log('\'Allo \'Allo! Content script');
+// Prevent conflicts
+jQuery.noConflict();
+
+// Encapsulated anonymous function
+(function($) {
+
+  // Variables & Constants
+  var KEYCODE_BACKSPACE = 8
+    , KEYCODE_TAB = 9
+    , KEYCODE_RETURN = 13
+    , KEYCODE_SPACEBAR = 32
+
+    , DEFAULT_CLEAR_BUFFER_TIMEOUT = 750
+    , TIME_EDITOR_CHECK = 500
+    , ANIMATION_FAST = 200
+    , ANIMATION_NORMAL = 400
+    , ANIMATION_SLOW = 1000
+    , TIME_SHOW_CROUTON = 1000 * 3	              // Show croutons for 3s
+
+    , ENUM_CAPITALIZATION_NONE = 0
+    , ENUM_CAPITALIZATION_FIRST = 1
+    , ENUM_CAPITALIZATION_ALL = 2
+
+    , EVENT_NAME_KEYPRESS = 'keypress.trackit'
+    , EVENT_NAME_KEYDOWN = 'keydown.trackit'
+    , EVENT_NAME_KEYUP = 'keyup.trackit'
+    , EVENT_NAME_BLUR = 'blur.trackit'
+    , EVENT_NAME_CLICK = 'click.trackit'
+    , EVENT_NAME_FOCUS = 'focus.trackit'
+    , EVENT_NAME_LOAD = 'load.trackit'
+    , EVENT_NAME_INSERTED = 'DOMNodeInserted'
+
+    , SPOTLIGHT_INPUT = '*[contenteditable=true],textarea,input'
+    , SPOTLIGHT_SHORTCUT = 'ctrl+space'
+    , SPOTLIGHT_CLASS = 'trackit-spotlight'
+  ;
+
+  var typingBuffer = [];		// Keep track of what's been typed before timeout
+  var typingTimeout;		 	// Delay before we clear buffer
+  var keyPressEvent;			// Keep track of keypress event to prevent re-firing
+  var keyUpEvent;				// Keep track of keyup event to prevent re-firing
+  var clipboard;				// Keep track of what's in the clipboard
+  var disableShortcuts;       // Flag to disable shortcuts in case of unreliable state
+
+  // Custom log function
+  function debugLog() {
+    if (console) {
+      console.log.apply(console, arguments);
+    }
+  }
+
+  // When user presses SPOTLIGHT_SHORTCUT
+  function activateSpotlight(event) {
+    debugLog('activateSpotlight()');
+
+    var d = document;
+    var $d = $(document);
+    $(d.createElement('form'))
+      .addClass(SPOTLIGHT_CLASS)
+      .append($(d.createElement('input'))
+        .attr('type', 'text')
+        .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER'))
+        .focus()
+        .on(EVENT_NAME_BLUR, hideSpotlight)
+      )
+      .appendTo('body');
+  }
+
+  // Hide the spotlight bar
+  function hideSpotlight(callback) {
+    $(SPOTLIGHT_CLASS).fadeOut(ANIMATION_FAST, function() {
+      $(SPOTLIGHT_CLASS).remove();
+
+      // Call callback if it is a function
+      if (callback && typeof(callback) === 'function') {
+        callback();
+      }
+    });
+  }
+
+  // When user presses a key
+  function keyPressHandler(event)
+  {
+    debugLog('keyPressHandler:', event.target);
+
+    // Make sure it's not the same event firing over and over again
+    if (keyPressEvent == event) {
+      return;
+    } else {
+      keyPressEvent = event;
+    }
+
+    // Get character that was typed
+    var charCode = event.keyCode || event.which;
+    if (charCode == KEYCODE_RETURN) {	// If return, clear and get out
+      return clearTypingBuffer();
+    }
+
+    // Add new character to typing buffer
+    var char = String.fromCharCode(charCode);
+    typingBuffer.push(char);
+
+    // Check typed text for shortcuts
+    checkShortcuts(typingBuffer.join(''), char, event.target);
+  }
+
+  // When user lifts up on a key, to catch backspace
+  function keyUpHandler(event)
+  {
+    // Make sure it's not the same event firing over and over again
+    if (keyUpEvent == event) {
+      return;
+    } else {
+      keyUpEvent = event;
+    }
+
+    // Get key that was lifted on
+    var charCode = event.keyCode || event.which;
+
+    // When user types backspace, pop character off buffer
+    if (charCode == KEYCODE_BACKSPACE)
+    {
+      // Remove last character typed
+      typingBuffer.pop();
+    }
+
+    // If user uses tab or return, clear and get out
+    if (charCode == KEYCODE_TAB || charCode == KEYCODE_RETURN) {
+      return clearTypingBuffer();
+    }
+  }
+
+  // Clears the typing buffer
+  function clearTypingBuffer(event)
+  {
+    // Clear buffer
+    typingBuffer.length = 0;
+  }
+
+  // Check to see if text in argument corresponds to any shortcuts
+  function checkShortcuts(shortcut, lastChar, textInput)
+  {
+    debugLog('checkShortcuts:', lastChar, shortcut);
+
+    var isAllCaps = (shortcut == shortcut.toUpperCase());   // Check for all caps
+    var shortcutKey = SHORTCUT_PREFIX + shortcut;           // Key for expansion
+    var shortcutKeyLowercase = SHORTCUT_PREFIX + shortcut.toLowerCase(); // For auto-capitalization
+
+    // Get shortcuts
+    chrome.storage.sync.get(shortcutKey, function (data)
+    {
+      // Check for errors
+      if (chrome.runtime.lastError) {
+        console.log(chrome.runtime.lastError);
+      }
+      // Check that data is returned and shortcut exists
+      else if (data && Object.keys(data).length)
+      {
+        processAutoTextExpansion(shortcut, data[shortcutKey], lastChar, textInput);
+      }
+
+      // No expansion for the shortcut, see if case is different
+      else if (shortcutKeyLowercase != shortcutKey)
+      {
+        // Check to see if there is a result lowercase version,
+        //  and if yes, then do auto-capitalization instead
+        chrome.storage.sync.get(shortcutKeyLowercase, function (data)
+        {
+          // Check for errors
+          if (chrome.runtime.lastError) {
+            console.log(chrome.runtime.lastError);
+          }
+          // Check that data is returned and shortcut exists
+          else if (data && Object.keys(data).length)
+          {
+            processAutoTextExpansion(shortcut,
+              data[shortcutKeyLowercase],
+              lastChar,
+              textInput,
+              (isAllCaps ? ENUM_CAPITALIZATION_ALL : ENUM_CAPITALIZATION_FIRST)
+            );
+          }
+        });
+      }
+
+      // If last character is whitespace, clear buffer
+      if (WHITESPACE_REGEX.test(lastChar)) {
+        clearTypingBuffer();
+      }
+    });
+  }
+
+  // Process autotext expansion and replace text
+  function processAutoTextExpansion(shortcut, autotext, lastChar, textInput, capitalization)
+  {
+    debugLog('processAutoTextExpansion:', autotext, capitalization);
+
+    // Check if shortcut exists and should be triggered
+    if (autotext && textInput)
+    {
+      // If shortcuts are disabled, abort early
+      if (disableShortcuts) {
+        return;
+      }
+
+      // Update / get clipboard text
+      getClipboardData(function()
+      {
+        // Handle clipboard pastes
+        autotext = processClips(autotext);
+
+        // Handle moment.js dates
+        autotext = processDates(autotext);
+
+        // Handle %url% macro
+        autotext = processUrls(autotext);
+
+        // Adjust capitalization
+        switch (capitalization)
+        {
+          case ENUM_CAPITALIZATION_FIRST:
+            autotext = autotext.charAt(0).toUpperCase() + autotext.slice(1);
+            break;
+
+          case ENUM_CAPITALIZATION_ALL:
+            autotext = autotext.toUpperCase();
+            break;
+
+          default: break;
+        }
+
+        // Setup for processing
+        var domain = window.location.host;
+        debugLog('textInput: ', textInput);
+
+        // If input or textarea field, can easily change the val
+        if (textInput.nodeName == 'TEXTAREA' || textInput.nodeName == 'INPUT')
+        {
+          // Add whitespace if was last character
+          if (WHITESPACE_REGEX.test(lastChar)) {
+            autotext += lastChar;
+          }
+
+          replaceTextRegular(shortcut, autotext, textInput);
+        }
+        else	// Trouble... editable divs & special cases
+        {
+          // Add whitespace if was last character
+          if (lastChar == ' ') {
+            autotext += '&nbsp;';
+          } else if (lastChar == '\t') {
+            autoText += '&#9;';
+          }
+
+          debugLog('Domain:', domain);
+          replaceTextContentEditable(shortcut, autotext, findFocusedNode());
+        }
+
+        // Always clear the buffer after a shortcut fires
+        clearTypingBuffer();
+      });	// END - getClipboardData()
+    }	// END - if (autotext)
+    else {  // Error
+      console.log('Invalid input, missing autotext or textinput parameters.');
+    }
+  }
+
+  // Specific handler for regular textarea and input elements
+  function replaceTextRegular(shortcut, autotext, textInput)
+  {
+    var cursorPosition = getCursorPosition(textInput);
+
+    // Fix for input[type=email] and input[type=number]
+    if (cursorPosition === 0 && textInput.nodeName == 'INPUT')
+    {
+      var type = textInput.getAttribute('type').toUpperCase();
+      if (type == 'EMAIL' || type == 'NUMBER') {
+        cursorPosition = textInput.value.length;
+      }
+    }
+
+    textInput.value = replaceText(
+      textInput.value,
+      shortcut,
+      autotext,
+      cursorPosition
+    );
+    setCursorPosition(textInput, cursorPosition - shortcut.length + autotext.length);
+  }
+
+  // Reusable handler for editable iframe text replacements
+  function replaceTextContentEditable(shortcut, autotext, node, win)
+  {
+    // Find focused div instead of what's receiving events
+    var textInput = node.parentNode;
+    debugLog(textInput);
+
+    // Get and process text, update cursor position
+    var cursorPosition = getCursorPosition(textInput, win)
+      , text = replaceHTML(node.textContent, shortcut, autotext, cursorPosition)
+      , multiline = false
+      , lines
+    ;
+
+    // If autotext is multiline text, split by newlines, join with <br> tag instead
+    if (autotext.indexOf('\n') >= 0)
+    {
+      lines = text.split('\n');
+      text = lines.join('<br>');
+      multiline = true;
+    }
+
+    // A way to insert HTML into a content editable div with raw JS.
+    //  Creates an element with the HTML content, then transfers node by node
+    //  to a new Document Fragment that replaces old node
+    //  Source from: http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div
+    var el = document.createElement('div')          // Used to store HTML
+      , frag = document.createDocumentFragment()  // To replace old node
+      , cursorNode;                               // To track cursor position
+    el.innerHTML = text;                            // Set HTML to div, then move to frag
+    for (var tempNode; tempNode = el.firstChild; frag.appendChild(tempNode))
+    {
+      debugLog(tempNode.nodeType, tempNode);
+      if (tempNode.nodeType === Node.COMMENT_NODE
+        && tempNode.nodeValue == CURSOR_TRACKING_TAG) {
+        cursorNode = tempNode;
+      }
+    }
+    textInput.replaceChild(frag, node);             // Replace old node with frag
+
+    // Set cursor position based off tracking node (or last child if we
+    //  weren't able to find the cursor tracker), then remove tracking node
+    setCursorPositionAfterNode(cursorNode || textInput.lastChild, win);
+    if (cursorNode) {
+      cursorNode.parentNode.removeChild(cursorNode);
+    }
+  }
+
+  // Replacing shortcut with autotext in text at cursorPosition
+  function replaceText(text, shortcut, autotext, cursorPosition)
+  {
+    debugLog('cursorPosition:', cursorPosition);
+    debugLog('currentText:', text);
+    debugLog('shortcut:', shortcut);
+    debugLog('expandedText:', autotext);
+
+    // Replace shortcut based off cursorPosition
+    return [text.slice(0, cursorPosition - shortcut.length),
+      autotext, text.slice(cursorPosition)].join('');
+  }
+
+  // Replacing shortcut with autotext HTML content at cursorPosition
+  function replaceHTML(text, shortcut, autotext, cursorPosition)
+  {
+    debugLog('cursorPosition:', cursorPosition);
+    debugLog('currentText:', text);
+    debugLog('shortcut:', shortcut);
+    debugLog('expandedText:', autotext);
+
+    // If autotext expansion already has cursor tag in it, don't insert
+    var cursorTag = (autotext.indexOf(CURSOR_TRACKING_HTML) >= 0)
+      ? '' : CURSOR_TRACKING_HTML;
+
+    // Replace shortcut based off cursorPosition,
+    //  insert tracking tag for cursor if it isn't already defined in autotext
+    return [text.slice(0, cursorPosition - shortcut.length),
+      autotext, cursorTag, text.slice(cursorPosition)].join('');
+  }
+
+    // Find node that has text contents that matches text
+  function findMatchingTextNode(div, text)
+  {
+    return $(div).contents().filter(function() {
+      return (this.nodeType == Node.TEXT_NODE)	    // Return all text nodes
+        && (this.nodeValue.length == text.length);	// with same text length
+    }).filter(function() {
+      return (this.nodeValue == text);	// Filter for same text
+    }).first().get(0);
+  }
+
+  // Find node that user is editing right now, for editable divs
+  //  Optional passed window to perform selection find on
+  function findFocusedNode(win)
+  {
+    // Use default window if not given window to search in
+    if (!win) {
+      win = window;
+    }
+
+    // Look for selection
+    if (win.getSelection) {
+      var selection = win.getSelection();
+      if (selection.rangeCount) {
+        return selection.getRangeAt(0).startContainer;
+      }
+    }
+    return null;
+  }
+
+  // Returns the first match for a parent matching the given tag and classes.
+  //  Tag parameter should be a string, el is the element to query on, and
+  //  classes should be an array of strings of the names of the classes.
+  function hasParentSelector(el, tag, classes)
+  {
+    tag = tag.toUpperCase();
+    var found = false;
+    while (el.parentNode && !found)
+    {
+      el = el.parentNode;     // Check parent
+      if (el && el.tagName == tag) {
+        for (var i = 0; i < classes.length; i++)
+        {
+          if (!el.classList.contains(classes[i])) {
+            break;
+          }
+          found = true;   // Found = true if element has all classes
+          break;          // Break to while loop
+        }
+      }
+    }
+    return el;
+  }
+
+  // Cross-browser solution for getting cursor position
+  function getCursorPosition(el, win, doc)
+  {
+    var pos = 0, sel;
+    if (!win) {
+      win = window;
+    }
+    if (!doc) {
+      doc = document;
+    }
+    if (el.nodeName == 'INPUT' || el.nodeName == 'TEXTAREA')
+    {
+      try { 	// Needed for new input[type=email] failing
+        pos = el.selectionStart;
+      } catch (exception) {
+        console.log('getCursorPosition:', exception);
+      }
+    }
+    else	// Other elements
+    {
+      sel = win.getSelection();
+      if (sel.rangeCount) {
+        pos = sel.getRangeAt(0).endOffset;
+      }
+    }
+    return pos;
+  }
+
+
+  // Cross-browser solution for setting cursor position
+  function setCursorPosition(el, pos)
+  {
+    debugLog('setCursorPosition:', pos);
+    var sel, range;
+    if (el.nodeName == 'INPUT' || el.nodeName == 'TEXTAREA') {
+      try {	// Needed for new input[type=email] failing
+        if (el.setSelectionRange) {
+          el.setSelectionRange(pos, pos);
+        } else if (el.createTextRange) {
+          range = el.createTextRange();
+          range.collapse(true);
+          range.moveEnd('character', pos);
+          range.moveStart('character', pos);
+          range.select();
+        }
+      } catch (exception) {
+        console.log('setCursorPosition', exception);
+      }
+    } else {	// Other elements
+      var node = el.childNodes[0];	// Need to get text node
+      if (window.getSelection && document.createRange) {
+        range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(true);
+        range.setEnd(node, pos);
+        range.setStart(node, pos);
+        sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else if (document.body.createTextRange) {
+        range = document.body.createTextRange();
+        range.moveToElementText(el);
+        range.collapse(true);
+        range.setEnd(node, pos);
+        range.setStart(node, pos);
+        range.select();
+      }
+    }
+  }
+
+  // Sets cursor position after a specific node, and optional
+  //  parameter to set what the window/document should be
+  function setCursorPositionAfterNode(node, win, doc)
+  {
+    debugLog('setCursorPositionAfterNode:', node);
+
+    // Setup variables
+    var sel, range;
+    if (!win) {
+      win = window;
+    }
+    if (!doc) {
+      doc = document;
+    }
+
+    // Check for getSelection(), if not available, try createTextRange
+    if (win.getSelection && doc.createRange)
+    {
+      range = doc.createRange();
+      range.setStartAfter(node);
+      range.collapse(true);
+      sel = win.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    else if (doc.body.createTextRange)
+    {
+      range = doc.body.createTextRange();
+      range.setStartAfter(node);
+      range.collapse(true);
+      range.select();
+    }
+  }
+
+  // Sets cursor position for a specific node, and optional
+  //  parameter to set what the window/document should be
+  function setCursorPositionInNode(node, pos, win, doc)
+  {
+    debugLog('setCursorPositionInNode:', pos);
+
+    // Setup variables
+    var sel, range;
+    if (!win) {
+      win = window;
+    }
+    if (!doc) {
+      doc = document;
+    }
+
+    // Check for getSelection(), if not available, try createTextRange
+    if (win.getSelection && doc.createRange)
+    {
+      range = doc.createRange();
+      range.setEnd(node, pos);
+      range.setStart(node, pos);
+      sel = win.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    else if (doc.body.createTextRange)
+    {
+      range = doc.body.createTextRange();
+      range.setEnd(node, pos);
+      range.setStart(node, pos);
+      range.select();
+    }
+  }
+
+  // Process and replace %url% tags with content from current url
+  function processUrls(text)
+  {
+    var url = window.location.href;
+    return text.replace(URL_MACRO_REGEX, url);
+  }
+
+  // Process and replace clip tags with content from clipboard
+  function processClips(text)
+  {
+    debugLog('processClips', text);
+
+    // Find all indices of opening tags
+    var clipTags = [];
+    while (result = CLIP_MACRO_REGEX.exec(text)) {
+      clipTags.push(result.index);
+    }
+
+    // Only continue if we have any tags
+    if (!clipTags.length) {
+      return text;
+    }
+    debugLog('clipTags:', clipTags);
+
+    // Loop through and replace clip tags with clipboard pasted text
+    var processedText = [text.slice(0, clipTags[0])];
+    debugLog(processedText);
+    for (var i = 0, len = clipTags.length; i < len; ++i)
+    {
+      processedText.push(clipboard);
+      debugLog('pre', processedText);
+      processedText.push(text.slice(clipTags[i] + 6,	// 6 for '%clip%'
+        (i == len - 1) ? undefined : clipTags[i+1]));
+      debugLog('post', processedText);
+    }
+
+    // Return processed dates
+    return processedText.join('');
+  }
+
+  // Get what's stored in the clipboard
+  function getClipboardData(completionBlock) {
+    chrome.runtime.sendMessage({
+      request:'getClipboardData'
+    }, function(data) {
+      debugLog('getClipboardData:', data);
+      clipboard = data.paste;
+      if (completionBlock) {
+        completionBlock();
+      }
+    });
+  }
+
+  // Add event listeners to specific container
+  function refreshListenersOnContainer($target)
+  {
+    debugLog('refreshListenersOnContainer:', $target);
+    $target.off(EVENT_NAME_KEYDOWN).on(EVENT_NAME_KEYDOWN, null, SPOTLIGHT_SHORTCUT, activateSpotlight);
+    // $target.off(EVENT_NAME_KEYPRESS).on(EVENT_NAME_KEYPRESS, SPOTLIGHT_INPUT, keyPressHandler);
+    // $target.off(EVENT_NAME_KEYUP).on(EVENT_NAME_KEYUP, SPOTLIGHT_INPUT, keyUpHandler);
+    // $target.off(EVENT_NAME_BLUR).on(EVENT_NAME_BLUR, SPOTLIGHT_INPUT, clearTypingBuffer);
+    // $target.off(EVENT_NAME_CLICK).on(EVENT_NAME_CLICK, SPOTLIGHT_INPUT, clearTypingBuffer);
+  }
+
+  // Add event listeners to specific element, without filtering on child elements
+  function refreshListenersOnElement($target)
+  {
+    debugLog('refreshListenersOnElement:', $target);
+    $target.off(EVENT_NAME_KEYDOWN).on(EVENT_NAME_KEYDOWN, null, SPOTLIGHT_SHORTCUT, activateSpotlight);
+    // $target.off(EVENT_NAME_KEYPRESS).on(EVENT_NAME_KEYPRESS, keyPressHandler);
+    // $target.off(EVENT_NAME_KEYUP).on(EVENT_NAME_KEYUP, keyUpHandler);
+    // $target.off(EVENT_NAME_BLUR).on(EVENT_NAME_BLUR, clearTypingBuffer);
+    // $target.off(EVENT_NAME_CLICK).on(EVENT_NAME_CLICK, clearTypingBuffer);
+  }
+
+  // Attach listener to keypresses
+  function addListeners()
+  {
+    debugLog('addListeners()');
+
+    var $document = $(document);
+    var domain = window.location.host;
+
+    // Add default listeners to document
+    debugLog('adding default listeners to document');
+    $document.on(EVENT_NAME_KEYDOWN, null, SPOTLIGHT_SHORTCUT, activateSpotlight);
+    // $document.on(EVENT_NAME_KEYPRESS, SPOTLIGHT_INPUT, keyPressHandler);
+    // $document.on(EVENT_NAME_KEYUP, SPOTLIGHT_INPUT, keyUpHandler);
+    // $document.on(EVENT_NAME_BLUR, SPOTLIGHT_INPUT, clearTypingBuffer);
+    // $document.on(EVENT_NAME_CLICK, SPOTLIGHT_INPUT, clearTypingBuffer);
+  }
+
+  // Detach listener for keypresses
+  function removeListeners()
+  {
+    $(document).off(EVENT_NAME_KEYDOWN);
+    // $(document).off(EVENT_NAME_KEYPRESS);
+    // $(document).off(EVENT_NAME_KEYUP);
+    // $(document).off(EVENT_NAME_LOAD);
+    // $(document).off(EVENT_NAME_BLUR);
+  }
+
+  // Create and show a warning message crouton that can be dismissed or autohide
+  function showCrouton(message, autohide)
+  {
+    // Create and style crouton
+    var crouton = document.createElement('div');
+    crouton.style['width'] = '100%';
+    crouton.style['position'] = 'fixed';
+    crouton.style['bottom'] = 0;
+    crouton.style['left'] = 0;
+    crouton.style['right'] = 0;
+    crouton.style['padding'] = '4px 0';
+    crouton.style['text-align'] = 'center';
+    crouton.style['font'] = 'bold 13px/16px Verdana';
+    crouton.style['color'] = '#fff';
+    crouton.style['background-color'] = '#c66';
+    crouton.style['opacity'] = '.8';
+
+    // Add to body, add content
+    var $crouton = $(crouton);
+    $('body').append($crouton.text(message));
+
+    if (autohide) {
+      $crouton.delay(TIME_SHOW_CROUTON).remove();
+    }
+    else    // Show a close button
+    {
+      // Create and style close button
+      var button = document.createElement('button');
+      button.style['font'] = 'bold 13px/13px Verdana';
+      button.style['margin'] = '0 6px';
+      button.style['padding'] = '4px';
+      button.style['float'] = 'right';
+
+      // Add to body, add content, and actions
+      $crouton.append($(button)
+        .text('x')
+        .click(function(e) {
+          $(this).parent().remove();
+        })
+      );
+    }
+  }
+
+  // Document ready function
+  $(function()
+  {
+    addListeners();         // Add listener to track when user types
+	});
+
+})(jQuery);

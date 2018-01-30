@@ -6,5 +6,9 @@
   "appDescription": {
     "message": "Trackit",
     "description": "The description of the application"
+  },
+  "SPOTLIGHT_PLACEHOLDER": {
+    "message": "Type \"AI\" or \"DC\" to capture a project artifact.",
+    "description": "Placeholder text that goes into the spotlight structured input bar"
   }
 }

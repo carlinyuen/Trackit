@@ -30,6 +30,9 @@ function lint(files, options) {
 gulp.task('lint', lint('app/scripts/**/*.js', {
   env: {
     es6: false
+  },
+  rules: {
+    'quotes': 0
   }
 }));
 
