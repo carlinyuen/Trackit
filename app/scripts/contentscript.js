@@ -12,12 +12,11 @@ jQuery.noConflict();
     , KEYCODE_RETURN = 13
     , KEYCODE_SPACEBAR = 32
 
-    , DEFAULT_CLEAR_BUFFER_TIMEOUT = 750
-    , TIME_EDITOR_CHECK = 500
     , ANIMATION_FAST = 200
     , ANIMATION_NORMAL = 400
     , ANIMATION_SLOW = 1000
     , TIME_SHOW_CROUTON = 1000 * 3	              // Show croutons for 3s
+    , WHITESPACE_REGEX = /(\s)/
 
     , ENUM_CAPITALIZATION_NONE = 0
     , ENUM_CAPITALIZATION_FIRST = 1
@@ -140,14 +139,12 @@ jQuery.noConflict();
     var charCode = event.keyCode || event.which;
 
     // When user types backspace, pop character off buffer
-    if (charCode == KEYCODE_BACKSPACE)
-    {
-      // Remove last character typed
-      typingBuffer.pop();
+    if (charCode == KEYCODE_BACKSPACE) {
+      typingBuffer.pop(); // Remove last character typed
     }
 
     // If user uses tab or return, clear and get out
-    if (charCode == KEYCODE_TAB || charCode == KEYCODE_RETURN) {
+    if (charCode == KEYCODE_TAB || charCode == KEYCODE_RETURN || event.target.value === "") {
       return clearTypingBuffer();
     }
   }
@@ -161,15 +158,29 @@ jQuery.noConflict();
 
   // Check for keywords
   function checkShortcuts(shortcut, lastChar, textInput) {
+    debugLog('checkShortcuts:', lastChar, shortcut);
+
+    var $spotlight = $(SPOTLIGHT_SELECTOR);
+    shortcut = shortcut.toUpperCase();
+
     switch (shortcut) {
-      case "AI:":
-        $(textInput).addClass(SPOTLIGHT_INPUT_AI_CLASS);
+      case 'AI: ':
+        $spotlight.removeClass(SPOTLIGHT_INPUT_DC_CLASS)
+          .addClass(SPOTLIGHT_INPUT_AI_CLASS);
+        $(textInput).val('');
         break;
-      case "DC:":
-        $(textInput).addClass(SPOTLIGHT_INPUT_DC_CLASS);
+      case 'DC: ':
+        $spotlight.removeClass(SPOTLIGHT_INPUT_AI_CLASS)
+          .addClass(SPOTLIGHT_INPUT_DC_CLASS);
+        $(textInput).val('');
         break;
       default:
         // do nothing
+    }
+
+    // If last character is whitespace, clear buffer
+    if (WHITESPACE_REGEX.test(lastChar)) {
+      clearTypingBuffer();
     }
   }
 

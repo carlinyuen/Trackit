@@ -12,7 +12,7 @@
     "description": "Placeholder text that goes into the spotlight structured input bar"
   },
   "KEYWORD_OMNIBAR_TRIGGER": {
-		"message": "AI:",
+		"message": "AI",
 		"description": "Omnibar (url address bar) trigger for extension."
 	}
 }

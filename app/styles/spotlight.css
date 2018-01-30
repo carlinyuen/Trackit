@@ -8,6 +8,7 @@
 	overflow: hidden;
 	border-width: 1px;
 	border-style: solid;
+	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
 	border-color: #dedede #bababa #aaa #bababa;
 	-moz-box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 5px 5px #444;
 	-webkit-box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 5px 5px #444;
@@ -50,13 +51,33 @@
    color: #999;
    font-weight: normal;
 }
-
 .trackit-spotlight .trackit-spotlight-input:-moz-placeholder {
 	color: #999;
 	font-weight: normal;
 }
-
 .trackit-spotlight .trackit-spotlight-input:-ms-input-placeholder {
   color: #999;
   font-weight: normal;
+}
+
+.trackit-spotlight.actionitem:after {
+  content: "AI";
+	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
+  background-color: #f99;
+  color: white;
+  padding: 4px;
+  margin: 4px 0;
+  display: block;
+  float: left;
+}
+
+.trackit-spotlight.decision:after {
+  content: "DC";
+	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
+  background-color: #9f9;
+  color: white;
+  padding: 4px;
+  margin: 4px 0;
+  display: block;
+  float: left;
 }
