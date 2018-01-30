@@ -8,7 +8,7 @@
     "description": "The description of the application"
   },
   "SPOTLIGHT_PLACEHOLDER": {
-    "message": "Type \"AI:\" or \"DC:\" to capture a project artifact.",
+    "message": "Type \"A:\" or \"D:\" to capture an action item or decision.",
     "description": "Placeholder text that goes into the spotlight structured input bar"
   },
   "KEYWORD_OMNIBAR_TRIGGER": {

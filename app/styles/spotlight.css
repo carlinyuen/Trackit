@@ -1,4 +1,4 @@
-.trackit-spotlight {
+#trackit-spotlight {
   z-index: 999999999;
   position: fixed;
   top: 45%;
@@ -25,7 +25,7 @@
 	background-image: linear-gradient(top, #f6f6f6, #eae8e8);
 }
 
-.trackit-spotlight .trackit-spotlight-input {
+#trackit-spotlight .trackit-spotlight-input {
 	width: 100%;
 	height: 3em;
 	padding: 10px 5px;
@@ -39,7 +39,7 @@
 	border-radius: 3px;
 }
 
-.trackit-spotlight .trackit-spotlight-input:focus {
+#trackit-spotlight .trackit-spotlight-input:focus {
 	outline: 0;
 	border-color: #aaa;
 	-moz-box-shadow: 0 1px 1px #bbb inset;
@@ -47,37 +47,33 @@
 	box-shadow: 0 1px 1px #bbb inset;
 }
 
-.trackit-spotlight .trackit-spotlight-input::-webkit-input-placeholder {
+#trackit-spotlight .trackit-spotlight-input::-webkit-input-placeholder {
    color: #999;
    font-weight: normal;
 }
-.trackit-spotlight .trackit-spotlight-input:-moz-placeholder {
+#trackit-spotlight .trackit-spotlight-input:-moz-placeholder {
 	color: #999;
 	font-weight: normal;
 }
-.trackit-spotlight .trackit-spotlight-input:-ms-input-placeholder {
+#trackit-spotlight .trackit-spotlight-input:-ms-input-placeholder {
   color: #999;
   font-weight: normal;
 }
 
-.trackit-spotlight.actionitem:after {
-  content: "AI";
+#trackit-spotlight[data-type]:after {
 	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
-  background-color: #f99;
   color: white;
   padding: 4px;
   margin: 4px 0;
   display: block;
   float: left;
 }
+#trackit-spotlight[data-type="actionitem"]:after {
+  content: "Action Item";
+  background-color: #f66;
+}
 
-.trackit-spotlight.decision:after {
-  content: "DC";
-	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
-  background-color: #9f9;
-  color: white;
-  padding: 4px;
-  margin: 4px 0;
-  display: block;
-  float: left;
+#trackit-spotlight[data-type="decision"]:after {
+  content: "Decision";
+  background-color: #6B6;
 }
