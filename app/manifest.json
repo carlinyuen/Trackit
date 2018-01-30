@@ -54,7 +54,7 @@
     }
   ],
   "omnibox": {
-    "keyword": "OMNIBOX-KEYWORD"
+    "keyword": "__MSG_KEYWORD_OMNIBAR_TRIGGER__"
   },
   "page_action": {
     "default_icon": {
