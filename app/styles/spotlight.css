@@ -61,7 +61,7 @@
 }
 
 #trackit-spotlight[data-type]:after {
-	font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
+	font: bold 16px 'helvetica';
   color: white;
   padding: 4px;
   margin: 4px 0;
@@ -76,4 +76,13 @@
 #trackit-spotlight[data-type="decision"]:after {
   content: "Decision";
   background-color: #6B6;
+}
+
+#trackit-spotlight[data-project]:before {
+  font: 14px 'helvetica';
+  color: #888;
+  margin: 4px 0;
+  display: block;
+  float: left;
+  content: attr(data-project);
 }

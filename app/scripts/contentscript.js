@@ -40,9 +40,9 @@ jQuery.noConflict();
     , SPOTLIGHT_INPUT_SELECTOR = '.' + SPOTLIGHT_INPUT_CLASS
 
     , SPOTLIGHT_PROJECT_DATA_ATTR = 'data-project'
-    , SPOTLIGHT_PROJECT_C = 'Collaboration'
-    , SPOTLIGHT_PROJECT_E = 'Engage'
-    , SPOTLIGHT_PROJECT_H = 'Huddle'
+    , SPOTLIGHT_PROJECT_C = 'COLLABORATION'
+    , SPOTLIGHT_PROJECT_E = 'ENGAGE'
+    , SPOTLIGHT_PROJECT_H = 'HUDDLE'
     , SPOTLIGHT_TYPE_DATA_ATTR = 'data-type'
     , SPOTLIGHT_TYPE_A = 'actionitem'
     , SPOTLIGHT_TYPE_D = 'decision'
@@ -154,11 +154,13 @@ jQuery.noConflict();
 
       // Clear data type if backspacing on empty field
       if (event.target.value === '') {
-        var $target = $(event.target);
+        var $target = $(SPOTLIGHT_SELECTOR);
         if ($target.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
           $target.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
+          debugLog('removed type data attr');
         } else if ($target.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
           $target.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
+          debugLog('removed project data attr');
         }
       }
     }
@@ -188,34 +190,31 @@ jQuery.noConflict();
       // Action item
       case 'A: ':
         $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
-        $(textInput).val('');
+        replaceTextRegular(shortcut.trim(), '', textInput);
         break;
 
       // Decision
       case 'D: ':
         $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
-        $(textInput).val('');
+        replaceTextRegular(shortcut.trim(), '', textInput);
         break;
 
       // Project
       case '#ENGAGE ':
         $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_E);
-        processAutoTextExpansion(shortcut,
-                    data[shortcutKeyLowercase],
-                    lastChar,
-                    textInput,
-                    (isAllCaps ? ENUM_CAPITALIZATION_ALL : ENUM_CAPITALIZATION_FIRST)
-                  );
+        replaceTextRegular(shortcut.trim(), '', textInput);
         break;
 
       // Project
       case '#COLLAB ':
         $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_C);
+        replaceTextRegular(shortcut.trim(), '', textInput);
         break;
 
       // Project
       case '#HUDDLE ':
         $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_H);
+        replaceTextRegular(shortcut.trim(), '', textInput);
         break;
 
       default:
@@ -361,21 +360,14 @@ jQuery.noConflict();
   {
     var cursorPosition = getCursorPosition(textInput);
 
-    // Fix for input[type=email] and input[type=number]
-    if (cursorPosition === 0 && textInput.nodeName == 'INPUT')
-    {
-      var type = textInput.getAttribute('type').toUpperCase();
-      if (type == 'EMAIL' || type == 'NUMBER') {
-        cursorPosition = textInput.value.length;
-      }
-    }
-
-    textInput.value = replaceText(
+    var newText = replaceText(
       textInput.value,
       shortcut,
       autotext,
       cursorPosition
     );
+    debugLog(newText);
+    textInput.value = newText;
     setCursorPosition(textInput, cursorPosition - shortcut.length + autotext.length);
   }
 
