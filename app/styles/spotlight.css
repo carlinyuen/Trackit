@@ -84,3 +84,10 @@
   float: left;
   content: attr(data-project);
 }
+
+.atwho-view ul li {
+  line-height: 16px;
+}
+.atwho-view ul li img {
+  vertical-align: middle;
+}

@@ -43,6 +43,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_INPUT_SELECTOR = '.' + SPOTLIGHT_INPUT_CLASS
     , SPOTLIGHT_DATA_CLASS = SPOTLIGHT_ID + '-data'
     , SPOTLIGHT_DATA_SELECTOR = '.' + SPOTLIGHT_DATA_CLASS
+    , SPOTLIGHT_LINK_CLASS = SPOTLIGHT_ID + '-link'
+    , SPOTLIGHT_LINK_SELECTOR = '.' + SPOTLIGHT_LINK_CLASS
 
     , SPOTLIGHT_PROJECT_DATA_ATTR = 'data-project'
     , SPOTLIGHT_PROJECT_C = 'COLLABORATION'
@@ -99,6 +101,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
       .append($(d.createElement('span'))
         .addClass(SPOTLIGHT_DATA_CLASS)
       )
+      .append($(d.createElement('span'))
+        .addClass(SPOTLIGHT_LINK_CLASS)
+      )
       .submit(spotlightSubmit)
       .hide()
       .appendTo(elementSelector)
@@ -127,12 +132,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }).atwho({
       at: 'go/',
       data: linkMap,
-      displayTpl: '<li><img src="${imgsrc}" height="20" width="20"/> ${name} </li>',
+      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
       insertTpl: '${name}'
     }).atwho({
       at: '/',
       data: linkMap,
-      displayTpl: '<li><img src="${imgsrc}" height="20" width="20"/> ${name} </li>',
+      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
       insertTpl: '${name}'
     }).atwho({
       at: '#',
@@ -192,6 +197,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
         break;
       case SPOTLIGHT_TYPE_D:
         message.push('Decision');
+        break;
+      case SPOTLIGHT_TYPE_U:
+        message.push('Update');
         break;
     }
     message.push('captured');
