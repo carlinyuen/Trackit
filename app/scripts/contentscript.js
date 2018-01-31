@@ -93,6 +93,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
         addListeners(SPOTLIGHT_INPUT_SELECTOR);
         $(SPOTLIGHT_INPUT_SELECTOR).focus();
       });
+    $(SPOTLIGHT_INPUT_SELECTOR).autogrow({
+      vertical: true,
+      horizontal: false,
+      flickering: false,
+    });
   }
 
   // Hide the spotlight bar
@@ -113,11 +118,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // When user submits spotlight form
   function spotlightSubmit(event) {
     console.log('spotlightSubmit');
-    event.preventDefault(); // prevent page refresh
+    if (event) {
+      event.preventDefault(); // prevent page refresh
+    }
 
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR)
-      , value = $textInput.val()
-    ;
+      , value = $textInput.val();
 
     if (value.trim() == '') {
       return;
@@ -141,8 +147,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     // Get character that was typed
     var charCode = event.keyCode || event.which;
+    if (charCode == KEYCODE_SPACEBAR) {
+      if (event.target.value === '') {
+        event.preventDefault();
+        return;
+      }
+    }
     if (charCode == KEYCODE_RETURN) {	// If return, clear and get out
-      return clearTypingBuffer();
+      clearTypingBuffer();
+      spotlightSubmit();
+      event.preventDefault();
+      return;
     }
 
     // Add new character to typing buffer

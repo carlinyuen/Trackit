@@ -47,6 +47,8 @@
       "js": [
         "bower_components/jquery/dist/jquery.js",
         "scripts/jquery.hotkeys.js",
+        "scripts/jquery.ns-autogrow.js",
+        "scripts/jquery.textcomplete.js",
         "scripts/contentscript.js"
       ],
       "run_at": "document_end",
