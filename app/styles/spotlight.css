@@ -47,7 +47,7 @@
 	font: bold 16px 'helvetica';
   color: white;
   padding: 4px;
-  margin: 4px 0;
+  margin: 4px 0 8px 0;
   display: block;
   float: left;
 }
@@ -83,6 +83,22 @@
   display: block;
   float: left;
   content: attr(data-project);
+}
+
+#trackit-spotlight .trackit-spotlight-link {
+  color: #888;
+  font: normal 14px/18px 'helvetica';
+}
+#trackit-spotlight .trackit-spotlight-link img {
+  vertical-align: middle;
+}
+#trackit-spotlight .trackit-spotlight-link[data-link]:before {
+  content: "";
+  display: table;
+  clear: both;
+  width: 100%;
+  padding-top: 6px;
+  border-top: solid 1px #ddd;
 }
 
 .atwho-view ul li {

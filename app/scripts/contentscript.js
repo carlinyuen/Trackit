@@ -55,10 +55,15 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_TYPE_D = 'decision'
     , SPOTLIGHT_TYPE_U = 'update'
     , SPOTLIGHT_OWNERS_DATA_ATTR = 'data-owners'
+    , SPOTLIGHT_LINK_DATA_ATTR = 'data-link'
 
     , PERSON_DATA = ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob', 'seth']
     , PROJECT_DATA = ['engage', 'collaboration', 'huddle']
     , LINK_DATA = ['go/engage-mocks', 'go/team-collaboration']
+    , LINK_IMGSRC = [
+      chrome.extension.getURL('images/icon-presentation.png'),
+      chrome.extension.getURL('images/icon-document.png'),
+    ]
   ;
 
   var typingBuffer = [];  // Keep track of what's been typed before timeout
@@ -122,7 +127,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       return {
         id: i,
         name: value,
-        imgsrc: chrome.extension.getURL((i % 2 != 0) ? 'images/icon-document.png' : 'images/icon-presentation.png')
+        imgsrc: LINK_IMGSRC[i]
       };
     });
 
@@ -133,25 +138,58 @@ jQuery.hotkeys.options.filterContentEditable = false;
       at: 'go/',
       data: linkMap,
       displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
-      insertTpl: '${name}'
+      insertTpl: '${name}',
+      callbacks: {
+        beforeInsert: autocompleteUpdateLink
+      }
     }).atwho({
       at: '/',
       data: linkMap,
       displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
-      insertTpl: '${name}'
+      insertTpl: '${name}',
+      callbacks: {
+        beforeInsert: autocompleteUpdateLink
+      }
     }).atwho({
       at: '#',
       data: PROJECT_DATA,
       callbacks: {
-        beforeInsert: function(value, $li) {
-          if (checkShortcuts(value + ' ', ' ', $textInput)) {
-            replaceTextRegular(typingBuffer.join(''), '', $textInput[0]);
-            updateSpotlightPlaceholderText();
-          }
-          return '';
-        }
+        beforeInsert: autocompleteUpdateProject
       }
     });
+  }
+
+  // Add link from autocomplete
+  function autocompleteUpdateLink(linkName) {
+    console.log('autocompleteUpdateLink:', linkName);
+
+    // Add link to links
+    var $link = $(SPOTLIGHT_LINK_SELECTOR);
+    $link.attr(SPOTLIGHT_LINK_DATA_ATTR, linkName);
+
+    // Hack
+    var imgsrc = LINK_IMGSRC[1];
+    if (linkName == 'go/engage-mocks') {
+      imgsrc = LINK_IMGSRC[0];
+    }
+    $link.html([
+      ' - ',
+      '<img src="' + imgsrc + '" height="16" width="16"/> ',
+      '<a href="http://' + linkName + '" target="_blank">' + linkName + '</a>',
+    ]);
+
+    return linkName;
+  }
+
+  // Update project data from autocomplete
+  function autocompleteUpdateProject(projectName) {
+    console.log('autocompleteUpdateProject:', projectName);
+    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
+    if (checkShortcuts(projectName + ' ', ' ', $textInput)) {
+      replaceTextRegular(typingBuffer.join(''), '', $textInput[0]);
+      updateSpotlightPlaceholderText();
+    }
+    return '';
   }
 
   // Hide the spotlight bar
@@ -179,16 +217,22 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR)
       , type = $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_TYPE_DATA_ATTR)
       , project = $(SPOTLIGHT_SELECTOR).attr(SPOTLIGHT_PROJECT_DATA_ATTR)
+      , $link = $(SPOTLIGHT_LINK_SELECTOR)
       , value = $textInput.val()
       , message = [];
     ;
 
+    // Only submit if there's content
     if (value.trim() == '') {
       return;
     }
 
     // Save to somewhere
+      // .attr(SPOTLIGHT_LINK_DATA_ATTR)
+
+    // Clean up
     $textInput.val('');
+    $link.html('').removeAttr(SPOTLIGHT_LINK_DATA_ATTR);
     updateOwners();
 
     switch (type) {
