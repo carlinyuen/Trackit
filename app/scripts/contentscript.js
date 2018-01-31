@@ -194,6 +194,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   // Hide the spotlight bar
   function hideSpotlight(callback) {
+    console.log('hideSpotlight');
     $(SPOTLIGHT_SELECTOR).fadeOut(ANIMATION_FAST, function() {
       // Focus back on pre-spotlight target if exists
       if (preSpotlightTarget) {
@@ -285,6 +286,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
         spotlightSubmit();
       }
       event.preventDefault();
+      return;
+    }
+    // If user hit ESC, close spotlight
+    if (charCode == KEYCODE_ESC) {
+      hideSpotlight();
       return;
     }
 

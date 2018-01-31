@@ -68,8 +68,7 @@
 #trackit-spotlight .trackit-spotlight-data[data-owners]:after {
 	font: bold 16px 'helvetica';
   color: #0e91e6;
-  /*padding: 4px 0 0 0;*/
-  line-height: 1.5em;
+  padding: 8px 0 0 0;
   display: block;
   float: right;
   content: attr(data-owners);
