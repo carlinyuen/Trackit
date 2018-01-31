@@ -59,7 +59,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     , PERSON_DATA = ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob', 'seth']
     , PROJECT_DATA = ['engage', 'collaboration', 'huddle']
-    , LINK_DATA = ['go/engage-mocks', 'go/team-collaboration']
+    , LINK_DATA = ['go/engage-hack', 'go/team-collaboration']
     , LINK_IMGSRC = [
       chrome.extension.getURL('images/icon-presentation.png'),
       chrome.extension.getURL('images/icon-document.png'),
@@ -167,9 +167,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var $link = $(SPOTLIGHT_LINK_SELECTOR);
     $link.attr(SPOTLIGHT_LINK_DATA_ATTR, linkName);
 
-    // Hack
+    // TODO: Hack
     var imgsrc = LINK_IMGSRC[1];
-    if (linkName == 'go/engage-mocks') {
+    if (linkName == 'go/engage-hack') {
       imgsrc = LINK_IMGSRC[0];
     }
     $link.html([
