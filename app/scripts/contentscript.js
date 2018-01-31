@@ -18,7 +18,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , ANIMATION_FAST = 200
     , ANIMATION_NORMAL = 400
     , ANIMATION_SLOW = 1000
-    , TIME_SHOW_CROUTON = 1000 * 3	              // Show croutons for 3s
+    , TIME_SHOW_CROUTON = 1000 * 2       // Show croutons for 2s
     , WHITESPACE_REGEX = /(\s)/
 
     , ENUM_CAPITALIZATION_NONE = 0
@@ -58,16 +58,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
   var clipboard;          // Keep track of what's in the clipboard
   var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
 
-  // Custom log function
-  function debugLog() {
-    if (console) {
-      console.log.apply(console, arguments);
-    }
-  }
-
   // When user presses SPOTLIGHT_SHORTCUT
   function activateSpotlight(event) {
-    debugLog('activateSpotlight()');
+    console.log('activateSpotlight()');
 
     preSpotlightTarget = event.target;
 
@@ -93,6 +86,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
         // .on(EVENT_NAME_BLUR, hideSpotlight)
       )
+      .submit(spotlightSubmit)
       .hide()
       .appendTo(elementSelector)
       .fadeIn(ANIMATION_FAST, function() {
@@ -116,10 +110,27 @@ jQuery.hotkeys.options.filterContentEditable = false;
     });
   }
 
+  // When user submits spotlight form
+  function spotlightSubmit(event) {
+    console.log('spotlightSubmit');
+    event.preventDefault(); // prevent page refresh
+
+    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR)
+      , value = $textInput.val()
+    ;
+
+    if (value.trim() == '') {
+      return;
+    }
+
+    $textInput.val('');
+    showCrouton('Thought captured!', true);
+  }
+
   // When user presses a key
   function keyPressHandler(event)
   {
-    debugLog('keyPressHandler:', event.target);
+    console.log('keyPressHandler:', event.target);
 
     // Make sure it's not the same event firing over and over again
     if (keyPressEvent == event) {
@@ -168,20 +179,20 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     // When user types backspace, pop character off buffer
     if (charCode == KEYCODE_BACKSPACE) {
-      typingBuffer.pop(); // Remove last character typed
-
       // Clear data type if backspacing on empty field
-      if (event.target.value === '') {
+      if (event.target.value === '' && typingBuffer.length === 0) {
         var $spotlight = $(SPOTLIGHT_SELECTOR);
         if ($spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
           $spotlight.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
-          debugLog('removed type data attr');
+          console.log('removed type data attr');
         } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
           $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
-          debugLog('removed project data attr');
+          console.log('removed project data attr');
         }
         updateSpotlightPlaceholderText();
       }
+
+      typingBuffer.pop(); // Remove last character typed
     }
 
     // If user uses tab or return, clear and get out
@@ -199,7 +210,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   // Check for keywords
   function checkShortcuts(shortcut, lastChar, textInput) {
-    debugLog('checkShortcuts:', lastChar, shortcut);
+    console.log('checkShortcuts:', lastChar, shortcut);
 
     var $spotlight = $(SPOTLIGHT_SELECTOR);
     shortcut = shortcut.toUpperCase();
@@ -264,7 +275,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // // Check to see if text in argument corresponds to any shortcuts
   // function checkShortcuts(shortcut, lastChar, textInput)
   // {
-  //   debugLog('checkShortcuts:', lastChar, shortcut);
+  //   console.log('checkShortcuts:', lastChar, shortcut);
   //
   //   var isAllCaps = (shortcut == shortcut.toUpperCase());   // Check for all caps
   //   var shortcutKey = SHORTCUT_PREFIX + shortcut;           // Key for expansion
@@ -317,7 +328,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Process autotext expansion and replace text
   function processAutoTextExpansion(shortcut, autotext, lastChar, textInput, capitalization)
   {
-    debugLog('processAutoTextExpansion:', autotext, capitalization);
+    console.log('processAutoTextExpansion:', autotext, capitalization);
 
     // Check if shortcut exists and should be triggered
     if (autotext && textInput)
@@ -355,7 +366,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
         // Setup for processing
         var domain = window.location.host;
-        debugLog('textInput: ', textInput);
+        console.log('textInput: ', textInput);
 
         // If input or textarea field, can easily change the val
         if (textInput.nodeName == 'TEXTAREA' || textInput.nodeName == 'INPUT')
@@ -376,7 +387,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
             autoText += '&#9;';
           }
 
-          debugLog('Domain:', domain);
+          console.log('Domain:', domain);
           replaceTextContentEditable(shortcut, autotext, findFocusedNode());
         }
 
@@ -400,7 +411,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       autotext,
       cursorPosition
     );
-    debugLog(newText);
+    console.log(newText);
     textInput.value = newText;
     setCursorPosition(textInput, cursorPosition - shortcut.length + autotext.length);
   }
@@ -410,7 +421,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   {
     // Find focused div instead of what's receiving events
     var textInput = node.parentNode;
-    debugLog(textInput);
+    console.log(textInput);
 
     // Get and process text, update cursor position
     var cursorPosition = getCursorPosition(textInput, win)
@@ -437,7 +448,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     el.innerHTML = text;                            // Set HTML to div, then move to frag
     for (var tempNode; tempNode = el.firstChild; frag.appendChild(tempNode))
     {
-      debugLog(tempNode.nodeType, tempNode);
+      console.log(tempNode.nodeType, tempNode);
       if (tempNode.nodeType === Node.COMMENT_NODE
         && tempNode.nodeValue == CURSOR_TRACKING_TAG) {
         cursorNode = tempNode;
@@ -456,10 +467,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Replacing shortcut with autotext in text at cursorPosition
   function replaceText(text, shortcut, autotext, cursorPosition)
   {
-    debugLog('cursorPosition:', cursorPosition);
-    debugLog('currentText:', text);
-    debugLog('shortcut:', shortcut);
-    debugLog('expandedText:', autotext);
+    console.log('cursorPosition:', cursorPosition);
+    console.log('currentText:', text);
+    console.log('shortcut:', shortcut);
+    console.log('expandedText:', autotext);
 
     // Replace shortcut based off cursorPosition
     return [text.slice(0, cursorPosition - shortcut.length),
@@ -469,10 +480,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Replacing shortcut with autotext HTML content at cursorPosition
   function replaceHTML(text, shortcut, autotext, cursorPosition)
   {
-    debugLog('cursorPosition:', cursorPosition);
-    debugLog('currentText:', text);
-    debugLog('shortcut:', shortcut);
-    debugLog('expandedText:', autotext);
+    console.log('cursorPosition:', cursorPosition);
+    console.log('currentText:', text);
+    console.log('shortcut:', shortcut);
+    console.log('expandedText:', autotext);
 
     // If autotext expansion already has cursor tag in it, don't insert
     var cursorTag = (autotext.indexOf(CURSOR_TRACKING_HTML) >= 0)
@@ -570,7 +581,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Cross-browser solution for setting cursor position
   function setCursorPosition(el, pos)
   {
-    debugLog('setCursorPosition:', pos);
+    console.log('setCursorPosition:', pos);
     var sel, range;
     if (el.nodeName == 'INPUT' || el.nodeName == 'TEXTAREA') {
       try {	// Needed for new input[type=email] failing
@@ -612,7 +623,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   //  parameter to set what the window/document should be
   function setCursorPositionAfterNode(node, win, doc)
   {
-    debugLog('setCursorPositionAfterNode:', node);
+    console.log('setCursorPositionAfterNode:', node);
 
     // Setup variables
     var sel, range;
@@ -646,7 +657,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   //  parameter to set what the window/document should be
   function setCursorPositionInNode(node, pos, win, doc)
   {
-    debugLog('setCursorPositionInNode:', pos);
+    console.log('setCursorPositionInNode:', pos);
 
     // Setup variables
     var sel, range;
@@ -694,7 +705,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // // Process and replace clip tags with content from clipboard
   // function processClips(text)
   // {
-  //   debugLog('processClips', text);
+  //   console.log('processClips', text);
   //
   //   // Find all indices of opening tags
   //   var clipTags = [];
@@ -706,18 +717,18 @@ jQuery.hotkeys.options.filterContentEditable = false;
   //   if (!clipTags.length) {
   //     return text;
   //   }
-  //   debugLog('clipTags:', clipTags);
+  //   console.log('clipTags:', clipTags);
   //
   //   // Loop through and replace clip tags with clipboard pasted text
   //   var processedText = [text.slice(0, clipTags[0])];
-  //   debugLog(processedText);
+  //   console.log(processedText);
   //   for (var i = 0, len = clipTags.length; i < len; ++i)
   //   {
   //     processedText.push(clipboard);
-  //     debugLog('pre', processedText);
+  //     console.log('pre', processedText);
   //     processedText.push(text.slice(clipTags[i] + 6,	// 6 for '%clip%'
   //       (i == len - 1) ? undefined : clipTags[i+1]));
-  //     debugLog('post', processedText);
+  //     console.log('post', processedText);
   //   }
   //
   //   // Return processed dates
@@ -729,7 +740,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   //   chrome.runtime.sendMessage({
   //     request:'getClipboardData'
   //   }, function(data) {
-  //     debugLog('getClipboardData:', data);
+  //     console.log('getClipboardData:', data);
   //     clipboard = data.paste;
   //     if (completionBlock) {
   //       completionBlock();
@@ -739,7 +750,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   // Attach listener to keypresses
   function addListeners(elementSelector) {
-    debugLog('addListeners:', elementSelector);
+    console.log('addListeners:', elementSelector);
 
     // Add default listeners to element
     var $target = $(elementSelector);
@@ -761,7 +772,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   // Attach listener for spotlight shortcut
   function addSpotlightListener() {
-    debugLog('addSpotlightListener()');
+    console.log('addSpotlightListener()');
     $(document).on(EVENT_NAME_KEYDOWN, null, SPOTLIGHT_SHORTCUT, activateSpotlight);
     $(document).on(EVENT_NAME_KEYDOWN, '*', SPOTLIGHT_SHORTCUT, activateSpotlight);
     $(document).on(EVENT_NAME_KEYDOWN, SPOTLIGHT_INPUT, SPOTLIGHT_SHORTCUT, activateSpotlight);
@@ -777,24 +788,28 @@ jQuery.hotkeys.options.filterContentEditable = false;
   {
     // Create and style crouton
     var crouton = document.createElement('div');
-    crouton.style['width'] = '100%';
+    crouton.style['width'] = 'auto';
     crouton.style['position'] = 'fixed';
-    crouton.style['bottom'] = 0;
-    crouton.style['left'] = 0;
-    crouton.style['right'] = 0;
-    crouton.style['padding'] = '4px 0';
+    crouton.style['bottom'] = '24px';
+    crouton.style['left'] = '24px';
+    crouton.style['padding'] = '16px';
     crouton.style['text-align'] = 'center';
-    crouton.style['font'] = 'bold 13px/16px Verdana';
+    crouton.style['font'] = 'bold 16px/16px Helvetica';
     crouton.style['color'] = '#fff';
-    crouton.style['background-color'] = '#c66';
+    crouton.style['background-color'] = '#222';
     crouton.style['opacity'] = '.8';
+    crouton.style['border-radius'] = '4px';
 
     // Add to body, add content
     var $crouton = $(crouton);
-    $('body').append($crouton.text(message));
+    $crouton.text(message).hide().appendTo('body').fadeIn(ANIMATION_FAST);
 
     if (autohide) {
-      $crouton.delay(TIME_SHOW_CROUTON).remove();
+      setTimeout(function() {
+        $crouton.fadeOut(ANIMATION_FAST, function() {
+          $crouton.remove();
+        });
+      }, TIME_SHOW_CROUTON);
     }
     else    // Show a close button
     {
