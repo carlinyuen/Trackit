@@ -152,7 +152,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
       return;
     }
 
+    // Save to somewhere
     $textInput.val('');
+    updateOwners();
     showCrouton('Thought captured!', true);
   }
 
@@ -214,6 +216,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
       keyUpEvent = event;
     }
 
+    // Update the owners data attribute
+    updateOwners(event);
+
     // Get key that was lifted on
     var charCode = event.keyCode || event.which;
 
@@ -264,7 +269,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     switch (shortcut) {
       case 'A: ': // Action item
+      case 'AI: ':
       case 'D: ': // Decision
+      case 'DC: ':
       case '#E ': // Project tag
       case '#ENGAGE ':
       case '#C ':
@@ -278,9 +285,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
         // Update data attribute
         switch (shortcut) {
           case 'A: ': // Action item
+          case 'AI: ':
             $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
             break;
           case 'D: ': // Decision
+          case 'DC: ':
             $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
             break;
           case '#E ': // Project
@@ -307,6 +316,16 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }
 
     return match;
+  }
+
+  // Update owners section if there's any owners set
+  function updateOwners(event) {
+    // console.log('updateOwners');
+    var text = $(SPOTLIGHT_INPUT_SELECTOR).val();
+    var matches = text.match(/(@\w+)/g);
+    // console.log(matches);
+    $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_OWNERS_DATA_ATTR,
+      (matches ? matches.join(', ') : ''));
   }
 
   // Update placeholder text to guide users based on state

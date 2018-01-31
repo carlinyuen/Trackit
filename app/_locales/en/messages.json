@@ -8,7 +8,7 @@
     "description": "The description of the application"
   },
   "SPOTLIGHT_PLACEHOLDER_ZERO": {
-    "message": "Try \"A:\" or \"D:\" or \"#E\" or \"#C\" or \"#H\".",
+    "message": "Try \"AI: @carlin to update #engage PRD\"",
     "description": "Placeholder text that goes into the spotlight structured input bar"
   },
   "SPOTLIGHT_PLACEHOLDER_PROJECT": {
@@ -20,7 +20,7 @@
     "description": "Placeholder text that goes into the spotlight structured input bar after a data type has been entered to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_BOTH": {
-    "message": "Now finish capturing your thought!",
+    "message": "Use \"@\" to link to a person, finish capturing your thought!",
     "description": "Placeholder text that goes into the spotlight structured input bar after both a project and data type are entered"
   },
   "KEYWORD_OMNIBAR_TRIGGER": {
