@@ -19,6 +19,7 @@
     "tabs",
     "http://*/*",
     "https://*/*",
+    "https://huddle.corp.google.com/",
     "background",
     "storage",
     "unlimitedStorage",

@@ -21,10 +21,6 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , TIME_SHOW_CROUTON = 1000 * 2       // Show croutons for 2s
     , WHITESPACE_REGEX = /(\s)/
 
-    , ENUM_CAPITALIZATION_NONE = 0
-    , ENUM_CAPITALIZATION_FIRST = 1
-    , ENUM_CAPITALIZATION_ALL = 2
-
     , NAMESPACE = 'trackit'
     , EVENT_NAME_KEYPRESS = 'keypress.' + NAMESPACE
     , EVENT_NAME_KEYDOWN = 'keydown.' + NAMESPACE
@@ -64,8 +60,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
       chrome.extension.getURL('images/icon-presentation.png'),
       chrome.extension.getURL('images/icon-document.png'),
     ]
+
+    , URL_XSRF_TOKEN = 'https://huddle.corp.google.com/_/engage/token?rt=j'
+    , HEADER_XSRF = 'X-Framework-Xsrf-Token'
   ;
 
+  var xsrfToken;          // Get token to talk to Engage
   var typingBuffer = [];  // Keep track of what's been typed before timeout
   var keyPressEvent;      // Keep track of keypress event to prevent re-firing
   var keyUpEvent;         // Keep track of keyup event to prevent re-firing
@@ -1026,9 +1026,21 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }
   }
 
+  // Get XSRF token for access to engage
+  function getXsrfToken() {
+    console.log('getXsrfToken');
+    $.get(URL_XSRF_TOKEN).always(
+      function(data, status, jqXHR) {
+        var response = JSON.parse(data.responseText.slice(6));
+        console.log('response:', response);
+      }
+    );
+  }
+
   // Document ready function
   $(function() {
     addSpotlightListener();         // Add listener for keyboard shortcut
+    getXsrfToken();
 	});
 
 })(jQuery);
