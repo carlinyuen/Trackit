@@ -80,7 +80,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var d = document;
     $(d.createElement('form'))
       .attr('id', SPOTLIGHT_ID)
-      .append($(d.createElement('input'))
+      .append($(d.createElement('textarea'))
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
