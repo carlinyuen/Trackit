@@ -101,7 +101,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
-        // .on(EVENT_NAME_BLUR, hideSpotlight)
+        .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .append($(d.createElement('span'))
         .addClass(SPOTLIGHT_DATA_CLASS)
@@ -179,6 +179,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
     ]);
 
     return linkName;
+  }
+
+  function removeLink() {
+    $(SPOTLIGHT_LINK_SELECTOR).removeAttr(SPOTLIGHT_LINK_DATA_ATTR).html('');
   }
 
   // Update project data from autocomplete
@@ -340,6 +344,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       // Clear data type if backspacing on empty field
       if (event.target.value === '' && typingBuffer.length === 0) {
         var $spotlight = $(SPOTLIGHT_SELECTOR)
+          , $link = $(SPOTLIGHT_LINK_SELECTOR)
           , $dataSpan = $(SPOTLIGHT_DATA_SELECTOR);
         if ($dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
           $dataSpan.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
@@ -347,6 +352,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
         } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
           $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
           console.log('removed project data attr');
+        } else {
+          removeLink();
+          console.log('removed link data attr');
         }
         updateSpotlightPlaceholderText();
       }
@@ -445,8 +453,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var text = $(SPOTLIGHT_INPUT_SELECTOR).val();
     var matches = text.match(/(@\w+)/g);
     // console.log(matches);
-    $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_OWNERS_DATA_ATTR,
-      (matches ? matches.join(', ') : ''));
+    if (matches) {
+      $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_OWNERS_DATA_ATTR, matches.join(', '));
+    } else {
+      $(SPOTLIGHT_DATA_SELECTOR).removeAttr(SPOTLIGHT_OWNERS_DATA_ATTR);
+    }
   }
 
   // Update placeholder text to guide users based on state
