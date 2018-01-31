@@ -59,6 +59,10 @@
   content: "Decision";
   background-color: #6B6;
 }
+#trackit-spotlight .trackit-spotlight-data[data-type="update"]:before {
+  content: "Update";
+  background-color: #66B;
+}
 
 /* Tracking artifact assignee/associated people */
 #trackit-spotlight .trackit-spotlight-data[data-owners]:after {

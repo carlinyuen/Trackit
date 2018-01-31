@@ -69,6 +69,7 @@
     "default_popup": "popup.html"
   },
   "web_accessible_resources": [
+    "images/*.png"
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://apis.google.com; object-src 'self'",
   "oauth2": {

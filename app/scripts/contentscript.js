@@ -51,7 +51,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_TYPE_DATA_ATTR = 'data-type'
     , SPOTLIGHT_TYPE_A = 'actionitem'
     , SPOTLIGHT_TYPE_D = 'decision'
+    , SPOTLIGHT_TYPE_U = 'update'
     , SPOTLIGHT_OWNERS_DATA_ATTR = 'data-owners'
+
+    , PERSON_DATA = ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob', 'seth']
+    , PROJECT_DATA = ['engage', 'collaboration', 'huddle']
+    , LINK_DATA = ['go/engage-mocks', 'go/team-collaboration']
   ;
 
   var typingBuffer = [];  // Keep track of what's been typed before timeout
@@ -80,7 +85,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   // Add spotlight bar to element
   //  param: elementSelector should be a string
-  function addSpotlightBar(elementSelector) {
+  function addSpotlightBar(elementSelector)
+  {
     var d = document;
     $(d.createElement('form'))
       .attr('id', SPOTLIGHT_ID)
@@ -100,18 +106,37 @@ jQuery.hotkeys.options.filterContentEditable = false;
         addListeners(SPOTLIGHT_INPUT_SELECTOR);
         $(SPOTLIGHT_INPUT_SELECTOR).focus();
       });
+
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
     $textInput.autogrow({
       vertical: true,
       horizontal: false,
       flickering: false,
     });
+    var linkMap = $.map(LINK_DATA, function(value, i) {
+      return {
+        id: i,
+        name: value,
+        imgsrc: chrome.extension.getURL((i % 2 != 0) ? 'images/icon-document.png' : 'images/icon-presentation.png')
+      };
+    });
+
     $textInput.atwho({
       at: '@',
-      data: ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob'],
+      data: PERSON_DATA,
+    }).atwho({
+      at: 'go/',
+      data: linkMap,
+      displayTpl: '<li><img src="${imgsrc}" height="20" width="20"/> ${name} </li>',
+      insertTpl: '${name}'
+    }).atwho({
+      at: '/',
+      data: linkMap,
+      displayTpl: '<li><img src="${imgsrc}" height="20" width="20"/> ${name} </li>',
+      insertTpl: '${name}'
     }).atwho({
       at: '#',
-      data: ['engage', 'collaboration', 'huddle'],
+      data: PROJECT_DATA,
       callbacks: {
         beforeInsert: function(value, $li) {
           if (checkShortcuts(value + ' ', ' ', $textInput)) {
@@ -294,8 +319,14 @@ jQuery.hotkeys.options.filterContentEditable = false;
     switch (shortcut) {
       case 'A: ': // Action item
       case 'AI: ':
+      case 'ACTIONITEM: ':
+      case 'TODO: ':
       case 'D: ': // Decision
       case 'DC: ':
+      case 'DECISION: ':
+      case 'U: ': // Update
+      case 'UD: ':
+      case 'UPDATE: ':
       case '#E ': // Project tag
       case '#ENGAGE ':
       case '#C ':
@@ -310,11 +341,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
         switch (shortcut) {
           case 'A: ': // Action item
           case 'AI: ':
+          case 'ACTIONITEM: ':
+          case 'TODO: ':
             $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
             break;
           case 'D: ': // Decision
           case 'DC: ':
+          case 'DECISION: ':
             $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
+            break;
+          case 'U: ': // Update
+          case 'UD: ':
+          case 'UPDATE: ':
+            $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_U);
             break;
           case '#E ': // Project
           case '#ENGAGE ':
