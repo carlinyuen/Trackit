@@ -13,6 +13,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , KEYCODE_TAB = 9
     , KEYCODE_RETURN = 13
     , KEYCODE_SPACEBAR = 32
+    , KEYCODE_ESC = 27
 
     , ANIMATION_FAST = 200
     , ANIMATION_NORMAL = 400
@@ -50,12 +51,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_TYPE_D = 'decision'
   ;
 
-  var typingBuffer = [];		// Keep track of what's been typed before timeout
-  var typingTimeout;		 	// Delay before we clear buffer
-  var keyPressEvent;			// Keep track of keypress event to prevent re-firing
-  var keyUpEvent;				// Keep track of keyup event to prevent re-firing
-  var clipboard;				// Keep track of what's in the clipboard
-  var disableShortcuts;       // Flag to disable shortcuts in case of unreliable state
+  var typingBuffer = [];  // Keep track of what's been typed before timeout
+  var keyPressEvent;      // Keep track of keypress event to prevent re-firing
+  var keyUpEvent;         // Keep track of keyup event to prevent re-firing
+  var preSpotlightTarget; // Keep track of element focus pre-spotlight
+  var clipboard;          // Keep track of what's in the clipboard
+  var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
 
   // Custom log function
   function debugLog() {
@@ -67,6 +68,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // When user presses SPOTLIGHT_SHORTCUT
   function activateSpotlight(event) {
     debugLog('activateSpotlight()');
+
+    preSpotlightTarget = event.target;
 
     // Check if there's already a spotlight bar, and if so, just focus
     if ($(SPOTLIGHT_INPUT_SELECTOR).length > 0) {
@@ -101,6 +104,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Hide the spotlight bar
   function hideSpotlight(callback) {
     $(SPOTLIGHT_SELECTOR).fadeOut(ANIMATION_FAST, function() {
+      // Focus back on pre-spotlight target if exists
+      if (preSpotlightTarget) {
+        $(preSpotlightTarget).focus();
+      }
+
       // Call callback if it is a function
       if (callback && typeof(callback) === 'function') {
         callback();
@@ -151,6 +159,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     // Get key that was lifted on
     var charCode = event.keyCode || event.which;
+
+    // If user hit ESC, close spotlight
+    if (charCode == KEYCODE_ESC) {
+      hideSpotlight();
+      return;
+    }
 
     // When user types backspace, pop character off buffer
     if (charCode == KEYCODE_BACKSPACE) {
@@ -749,6 +763,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function addSpotlightListener() {
     debugLog('addSpotlightListener()');
     $(document).on(EVENT_NAME_KEYDOWN, null, SPOTLIGHT_SHORTCUT, activateSpotlight);
+    $(document).on(EVENT_NAME_KEYDOWN, '*', SPOTLIGHT_SHORTCUT, activateSpotlight);
+    $(document).on(EVENT_NAME_KEYDOWN, SPOTLIGHT_INPUT, SPOTLIGHT_SHORTCUT, activateSpotlight);
   }
 
   // Detach listener for spotlight shortcut
