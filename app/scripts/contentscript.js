@@ -39,8 +39,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_SHORTCUT = 'ctrl+space'
     , SPOTLIGHT_ID = NAMESPACE + '-spotlight'
     , SPOTLIGHT_SELECTOR = '#' + SPOTLIGHT_ID
-    , SPOTLIGHT_INPUT_CLASS = NAMESPACE + '-spotlight-input'
+    , SPOTLIGHT_INPUT_CLASS = SPOTLIGHT_ID + '-input'
     , SPOTLIGHT_INPUT_SELECTOR = '.' + SPOTLIGHT_INPUT_CLASS
+    , SPOTLIGHT_DATA_CLASS = SPOTLIGHT_ID + '-data'
+    , SPOTLIGHT_DATA_SELECTOR = '.' + SPOTLIGHT_DATA_CLASS
 
     , SPOTLIGHT_PROJECT_DATA_ATTR = 'data-project'
     , SPOTLIGHT_PROJECT_C = 'COLLABORATION'
@@ -49,6 +51,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_TYPE_DATA_ATTR = 'data-type'
     , SPOTLIGHT_TYPE_A = 'actionitem'
     , SPOTLIGHT_TYPE_D = 'decision'
+    , SPOTLIGHT_OWNERS_DATA_ATTR = 'data-owners'
   ;
 
   var typingBuffer = [];  // Keep track of what's been typed before timeout
@@ -86,6 +89,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
         // .on(EVENT_NAME_BLUR, hideSpotlight)
       )
+      .append($(d.createElement('span'))
+        .addClass(SPOTLIGHT_DATA_CLASS)
+      )
       .submit(spotlightSubmit)
       .hide()
       .appendTo(elementSelector)
@@ -93,10 +99,27 @@ jQuery.hotkeys.options.filterContentEditable = false;
         addListeners(SPOTLIGHT_INPUT_SELECTOR);
         $(SPOTLIGHT_INPUT_SELECTOR).focus();
       });
-    $(SPOTLIGHT_INPUT_SELECTOR).autogrow({
+    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
+    $textInput.autogrow({
       vertical: true,
       horizontal: false,
       flickering: false,
+    });
+    $textInput.atwho({
+      at: '@',
+      data: ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob'],
+    }).atwho({
+      at: '#',
+      data: ['engage', 'collaboration', 'huddle'],
+      callbacks: {
+        beforeInsert: function(value, $li) {
+          if (checkShortcuts(value + ' ', ' ', $textInput)) {
+            replaceTextRegular(typingBuffer.join(''), '', $textInput[0]);
+            updateSpotlightPlaceholderText();
+          }
+          return '';
+        }
+      }
     });
   }
 
@@ -155,7 +178,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }
     if (charCode == KEYCODE_RETURN) {	// If return, clear and get out
       clearTypingBuffer();
-      spotlightSubmit();
+      if (event.target.value.trim() != '') { // Only submit if there's content
+        spotlightSubmit();
+      }
       event.preventDefault();
       return;
     }
@@ -165,7 +190,13 @@ jQuery.hotkeys.options.filterContentEditable = false;
     typingBuffer.push(char);
 
     // Check typed text for shortcuts
-    checkShortcuts(typingBuffer.join(''), char, event.target);
+    // checkShortcuts(typingBuffer.join(''), char, event.target);
+    var shortcut = typingBuffer.join('');
+    if (checkShortcuts(shortcut, char, event.target)) {
+      // Replace text in the input field
+      replaceTextRegular(shortcut.trim(), '', event.target);
+      updateSpotlightPlaceholderText();
+    }
   }
 
   // When user lifts up on a key, to catch backspace
@@ -196,9 +227,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
     if (charCode == KEYCODE_BACKSPACE) {
       // Clear data type if backspacing on empty field
       if (event.target.value === '' && typingBuffer.length === 0) {
-        var $spotlight = $(SPOTLIGHT_SELECTOR);
-        if ($spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
-          $spotlight.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
+        var $spotlight = $(SPOTLIGHT_SELECTOR)
+          , $dataSpan = $(SPOTLIGHT_DATA_SELECTOR);
+        if ($dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
+          $dataSpan.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
           console.log('removed type data attr');
         } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
           $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
@@ -217,9 +249,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   }
 
   // Clears the typing buffer
-  function clearTypingBuffer(event)
-  {
-    // Clear buffer
+  function clearTypingBuffer(event) {
     typingBuffer.length = 0;
   }
 
@@ -227,38 +257,46 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function checkShortcuts(shortcut, lastChar, textInput) {
     console.log('checkShortcuts:', lastChar, shortcut);
 
-    var $spotlight = $(SPOTLIGHT_SELECTOR);
+    var $spotlight = $(SPOTLIGHT_SELECTOR)
+      , $dataSpan = $(SPOTLIGHT_DATA_SELECTOR)
+      , match = false;
     shortcut = shortcut.toUpperCase();
 
     switch (shortcut) {
       case 'A: ': // Action item
       case 'D: ': // Decision
       case '#E ': // Project tag
+      case '#ENGAGE ':
       case '#C ':
+      case '#COLLAB ':
+      case '#COLLABORATION ':
       case '#H ':
+      case '#HUDDLE ':
       {
+        match = true;
+
         // Update data attribute
         switch (shortcut) {
           case 'A: ': // Action item
-            $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
+            $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_A);
             break;
           case 'D: ': // Decision
-            $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
+            $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR, SPOTLIGHT_TYPE_D);
             break;
           case '#E ': // Project
+          case '#ENGAGE ':
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_E);
             break;
           case '#C ':
+          case '#COLLAB ':
+          case '#COLLABORATION ':
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_C);
             break;
           case '#H ':
+          case '#HUDDLE ':
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_H);
             break;
         }
-
-        // Replace text in the input field
-        replaceTextRegular(shortcut.trim(), '', textInput);
-        updateSpotlightPlaceholderText();
       }
       break;
     }
@@ -267,14 +305,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
     if (WHITESPACE_REGEX.test(lastChar)) {
       clearTypingBuffer();
     }
+
+    return match;
   }
 
   // Update placeholder text to guide users based on state
   function updateSpotlightPlaceholderText() {
-    var $spotlight = $(SPOTLIGHT_SELECTOR);
-    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
-    var hasType = $spotlight.attr(SPOTLIGHT_TYPE_DATA_ATTR)
-    , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
+    var $spotlight = $(SPOTLIGHT_SELECTOR)
+      , $dataSpan = $(SPOTLIGHT_DATA_SELECTOR)
+      , $textInput = $(SPOTLIGHT_INPUT_SELECTOR)
+      , hasType = $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)
+      , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
 
     if (hasType && hasProject) {
       $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_BOTH'));

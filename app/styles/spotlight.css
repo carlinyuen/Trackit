@@ -1,5 +1,5 @@
 #trackit-spotlight {
-  z-index: 999999999;
+  z-index: 11100;
   position: fixed;
   top: 45%;
 	width: 450px;
@@ -42,7 +42,8 @@
    font-weight: normal;
 }
 
-#trackit-spotlight[data-type]:after {
+/* Tracking artifact type */
+#trackit-spotlight .trackit-spotlight-data[data-type]:before {
 	font: bold 16px 'helvetica';
   color: white;
   padding: 4px;
@@ -50,16 +51,27 @@
   display: block;
   float: left;
 }
-#trackit-spotlight[data-type="actionitem"]:after {
+#trackit-spotlight .trackit-spotlight-data[data-type="actionitem"]:before {
   content: "Action Item";
   background-color: #f66;
 }
-
-#trackit-spotlight[data-type="decision"]:after {
+#trackit-spotlight .trackit-spotlight-data[data-type="decision"]:before {
   content: "Decision";
   background-color: #6B6;
 }
 
+/* Tracking artifact assignee/associated people */
+#trackit-spotlight .trackit-spotlight-data[data-owners]:after {
+	font: bold 16px 'helvetica';
+  color: #0e91e6;
+  padding: 4px;
+  margin: 4px 0;
+  display: block;
+  float: right;
+  content: attr(data-owners);
+}
+
+/* Tracking project grouping */
 #trackit-spotlight[data-project]:before {
   font: 14px 'helvetica';
   color: #888;
