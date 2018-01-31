@@ -8,23 +8,31 @@
     "description": "The description of the application"
   },
   "SPOTLIGHT_PLACEHOLDER_ZERO": {
-    "message": "Try \"AI: @carlin to update #engage PRD\"",
+    "message": "Try \"AI: @carlin to update PRD\"",
     "description": "Placeholder text that goes into the spotlight structured input bar"
   },
   "SPOTLIGHT_PLACEHOLDER_ONE": {
     "message": "Now try \"@jason to update mocks\"",
-    "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
+    "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_TWO": {
-    "message": "Now try \"D: #collab decision to focus on program managers go\/strategy-doc\"",
-    "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
+    "message": "Let's try \"D: decision on blue #engage\"",
+    "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
+  },
+  "SPOTLIGHT_PLACEHOLDER_THREE": {
+    "message": "\"Mocks updated at go\/engage-mocks\"",
+    "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
+  },
+  "SPOTLIGHT_PLACEHOLDER_FOUR": {
+    "message": "\"#collab focus on teams go\/team-collaboration\"",
+    "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_PROJECT": {
     "message": "Use \"A:\" or \"D:\" to add an AI or decision to the project.",
     "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_TYPE": {
-    "message": "Nice! Try \"#E\" or \"#C\" to easily group with a project.",
+    "message": "Use \"#\" to associate with a project.",
     "description": "Placeholder text that goes into the spotlight structured input bar after a data type has been entered to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_BOTH": {

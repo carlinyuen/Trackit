@@ -163,19 +163,22 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     switch (type) {
       case SPOTLIGHT_TYPE_A:
-        guideState = 1;
         message.push('Action item');
         break;
       case SPOTLIGHT_TYPE_D:
-        guideState = 2;
         message.push('Decision');
         break;
     }
-    message.push('captured for');
-    message.push('#' + project.charAt(0).toUpperCase() + project.toLowerCase().slice(1));
+    message.push('captured');
+
+    if (project && project != '') {
+      message.push('for');
+      message.push('#' + project.charAt(0).toUpperCase() + project.toLowerCase().slice(1));
+    }
 
     showCrouton(message.join(' '), true);
 
+    guideState++;
     updateSpotlightPlaceholderText();
   }
 
@@ -355,21 +358,23 @@ jQuery.hotkeys.options.filterContentEditable = false;
       , $dataSpan = $(SPOTLIGHT_DATA_SELECTOR)
       , $textInput = $(SPOTLIGHT_INPUT_SELECTOR)
       , hasType = $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)
-      , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
+      , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)
+      , messageCode
+    ;
 
-    if (guideState === 0) {
-      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'));
-    } else if (guideState === 1) {
-      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ONE'));
-    } else if (hasType && hasProject) {
-      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_BOTH'));
-    } else if (hasType) {
-      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_TYPE'));
-    } else if (hasProject) {
-      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_PROJECT'));
-    } else {
-      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'));
+    switch (guideState) {
+      case 0: messageCode = 'SPOTLIGHT_PLACEHOLDER_ZERO'; break;
+      case 1: messageCode = 'SPOTLIGHT_PLACEHOLDER_ONE'; break;
+      case 2: messageCode = 'SPOTLIGHT_PLACEHOLDER_TWO'; break;
+      case 3: messageCode = 'SPOTLIGHT_PLACEHOLDER_THREE'; break;
+      case 4: messageCode = 'SPOTLIGHT_PLACEHOLDER_FOUR'; break;
+      case (hasType && hasProject):
+        messageCode = 'SPOTLIGHT_PLACEHOLDER_BOTH'; break;
+      case (hasType): messageCode = 'SPOTLIGHT_PLACEHOLDER_TYPE'; break;
+      case (hasProject): messageCode = 'SPOTLIGHT_PLACEHOLDER_PROJECT'; break;
     }
+
+    $textInput.attr('placeholder', chrome.i18n.getMessage(messageCode));
   }
 
   // // Check to see if text in argument corresponds to any shortcuts
