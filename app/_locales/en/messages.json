@@ -11,8 +11,16 @@
     "message": "Try \"AI: @carlin to update #engage PRD\"",
     "description": "Placeholder text that goes into the spotlight structured input bar"
   },
+  "SPOTLIGHT_PLACEHOLDER_ONE": {
+    "message": "Now try \"@jason to update mocks\"",
+    "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
+  },
+  "SPOTLIGHT_PLACEHOLDER_TWO": {
+    "message": "Now try \"D: #collab decision to focus on program managers go\/strategy-doc\"",
+    "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
+  },
   "SPOTLIGHT_PLACEHOLDER_PROJECT": {
-    "message": "Now try \"A:\" or \"D:\" to add an AI or decision to that project.",
+    "message": "Use \"A:\" or \"D:\" to add an AI or decision to the project.",
     "description": "Placeholder text that goes into the spotlight structured input bar after a project has been entered to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_TYPE": {

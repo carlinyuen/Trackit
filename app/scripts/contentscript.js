@@ -60,6 +60,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   var preSpotlightTarget; // Keep track of element focus pre-spotlight
   var clipboard;          // Keep track of what's in the clipboard
   var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
+  var guideState = 0;     // Flag to keep track of state of user onboarding
 
   // When user presses SPOTLIGHT_SHORTCUT
   function activateSpotlight(event) {
@@ -146,7 +147,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }
 
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR)
-      , value = $textInput.val();
+      , type = $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_TYPE_DATA_ATTR)
+      , project = $(SPOTLIGHT_SELECTOR).attr(SPOTLIGHT_PROJECT_DATA_ATTR)
+      , value = $textInput.val()
+      , message = [];
+    ;
 
     if (value.trim() == '') {
       return;
@@ -155,7 +160,23 @@ jQuery.hotkeys.options.filterContentEditable = false;
     // Save to somewhere
     $textInput.val('');
     updateOwners();
-    showCrouton('Thought captured!', true);
+
+    switch (type) {
+      case SPOTLIGHT_TYPE_A:
+        guideState = 1;
+        message.push('Action item');
+        break;
+      case SPOTLIGHT_TYPE_D:
+        guideState = 2;
+        message.push('Decision');
+        break;
+    }
+    message.push('captured for');
+    message.push('#' + project.charAt(0).toUpperCase() + project.toLowerCase().slice(1));
+
+    showCrouton(message.join(' '), true);
+
+    updateSpotlightPlaceholderText();
   }
 
   // When user presses a key
@@ -336,7 +357,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
       , hasType = $dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)
       , hasProject = $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR);
 
-    if (hasType && hasProject) {
+    if (guideState === 0) {
+      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'));
+    } else if (guideState === 1) {
+      $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ONE'));
+    } else if (hasType && hasProject) {
       $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_BOTH'));
     } else if (hasType) {
       $textInput.attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_TYPE'));
