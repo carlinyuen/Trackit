@@ -210,6 +210,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function addLink(url) {
     console.log('addLink:', url);
 
+    // If url doesn't include domain, include it
+    url = getAbsoluteURL(url);
+    console.log('absolute url:', url);
+
     // Add link to links
     var $link = $(SPOTLIGHT_LINK_SELECTOR);
     $link.attr(SPOTLIGHT_LINK_DATA_ATTR, url);
@@ -221,6 +225,13 @@ jQuery.hotkeys.options.filterContentEditable = false;
     getPageTitleForURL(url, function(name) {
       $link.find('a').text(name);
     });
+  }
+
+  // Generates an absolute URL from relative url
+  function getAbsoluteURL(href) {
+    var link = document.createElement("a");
+    link.href = href;
+    return (link.protocol+"//"+link.host+link.pathname+link.search+link.hash);
   }
 
   function removeLink() {
