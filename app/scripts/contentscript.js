@@ -117,12 +117,15 @@ jQuery.hotkeys.options.filterContentEditable = false;
         $(SPOTLIGHT_INPUT_SELECTOR).focus();
       });
 
+    // Grow textbox if needed
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
     $textInput.autogrow({
       vertical: true,
       horizontal: false,
       flickering: false,
     });
+
+    // Trigger on keywords
     var linkMap = $.map(LINK_DATA, function(value, i) {
       return {
         id: i,
@@ -130,7 +133,6 @@ jQuery.hotkeys.options.filterContentEditable = false;
         imgsrc: LINK_IMGSRC[i]
       };
     });
-
     $textInput.atwho({
       at: '@',
       data: PERSON_DATA,
@@ -157,6 +159,16 @@ jQuery.hotkeys.options.filterContentEditable = false;
         beforeInsert: autocompleteUpdateProject
       }
     });
+
+    // Add text in clipboard or selected text
+    var text = getSelectionText();
+    if (text) {
+      $textInput.val(text);
+    } else {
+      getClipboardData(function(data) {
+        $textInput.val(clipboard);
+      });
+    }
   }
 
   // Add link from autocomplete
@@ -762,6 +774,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
     return el;
   }
 
+  // Get selected text
+  function getSelectionText() {
+      var text = "";
+      if (window.getSelection) {
+          text = window.getSelection().toString();
+      } else if (document.selection && document.selection.type != "Control") {
+          text = document.selection.createRange().text;
+      }
+      return text;
+  }
+
   // Cross-browser solution for getting cursor position
   function getCursorPosition(el, win, doc)
   {
@@ -947,19 +970,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
   //   // Return processed dates
   //   return processedText.join('');
   // }
-  //
-  // // Get what's stored in the clipboard
-  // function getClipboardData(completionBlock) {
-  //   chrome.runtime.sendMessage({
-  //     request:'getClipboardData'
-  //   }, function(data) {
-  //     console.log('getClipboardData:', data);
-  //     clipboard = data.paste;
-  //     if (completionBlock) {
-  //       completionBlock();
-  //     }
-  //   });
-  // }
+
+  // Get what's stored in the clipboard
+  function getClipboardData(completionBlock) {
+    chrome.runtime.sendMessage({
+      request:'getClipboardData'
+    }, function(data) {
+      console.log('getClipboardData:', data);
+      clipboard = data.paste;
+      if (completionBlock) {
+        completionBlock();
+      }
+    });
+  }
 
   // Attach listener to keypresses
   function addListeners(elementSelector) {
