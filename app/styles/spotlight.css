@@ -87,6 +87,10 @@
 #trackit-spotlight .trackit-spotlight-link {
   color: #888;
   font: normal 14px/18px 'helvetica';
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #trackit-spotlight .trackit-spotlight-link img {
   vertical-align: middle;

@@ -11,6 +11,7 @@
   "default_locale": "en",
   "background": {
     "scripts": [
+      "bower_components/jquery/dist/jquery.js",
       "scripts/chromereload.js",
       "scripts/background.js"
     ]
@@ -27,7 +28,8 @@
     "desktopCapture",
     "tabCapture",
     "notifications",
-    "identity"
+    "identity",
+    "clipboardRead"
   ],
   "options_ui": {
     "page": "options.html",

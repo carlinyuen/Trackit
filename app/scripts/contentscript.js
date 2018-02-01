@@ -67,6 +67,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   var xsrfToken;          // Get token to talk to Engage
   var typingBuffer = [];  // Keep track of what's been typed before timeout
+  var shorcutEvent;       // Keep track of shortcut event to prevent re-firing
   var keyPressEvent;      // Keep track of keypress event to prevent re-firing
   var keyUpEvent;         // Keep track of keyup event to prevent re-firing
   var preSpotlightTarget; // Keep track of element focus pre-spotlight
@@ -78,12 +79,21 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function activateSpotlight(event) {
     console.log('activateSpotlight()');
 
+    // Make sure it's not the same event firing over and over again
+    if (shorcutEvent == event) {
+      return;
+    } else {
+      shorcutEvent = event;
+    }
+
     preSpotlightTarget = event.target;
 
     // Check if there's already a spotlight bar, and if so, just focus
-    if ($(SPOTLIGHT_INPUT_SELECTOR).length > 0) {
+    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
+    if ($textInput.length > 0) {
+      updateInputWithClipboardSelection($textInput);
       $(SPOTLIGHT_SELECTOR).fadeIn(ANIMATION_FAST, function() {
-        $(SPOTLIGHT_INPUT_SELECTOR).focus();
+        $textInput.focus();
       });
     } else {
       addSpotlightBar('body');
@@ -101,12 +111,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
-        .on(EVENT_NAME_BLUR, hideSpotlight)
+        // .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .append($(d.createElement('span'))
         .addClass(SPOTLIGHT_DATA_CLASS)
       )
-      .append($(d.createElement('span'))
+      .append($(d.createElement('div'))
         .addClass(SPOTLIGHT_LINK_CLASS)
       )
       .submit(spotlightSubmit)
@@ -160,13 +170,28 @@ jQuery.hotkeys.options.filterContentEditable = false;
       }
     });
 
-    // Add text in clipboard or selected text
-    var text = getSelectionText();
-    if (text) {
-      $textInput.val(text);
+    // Check clipboard/selection for content to pre-populate
+    updateInputWithClipboardSelection($textInput);
+  }
+
+  // Checks for content in clipboard/selection to add to field
+  // Add text in clipboard or selected text, prioritizes selection over clipboard
+  function updateInputWithClipboardSelection($textInput) {
+    var selectionData = getSelectionHTML(),
+      value = $textInput.val();
+    if (selectionData && value.indexOf(selectionData.text) < 0) {
+      $textInput.val(value + ' ' + selectionData.text);
+      if (selectionData.urls && selectionData.urls.length > 0) {
+        addLink(selectionData.urls[1]);
+      }
     } else {
-      getClipboardData(function(data) {
-        $textInput.val(clipboard);
+      getClipboardData(function() {
+        if (value.indexOf(clipboard.text) < 0) {
+          $textInput.val(value + ' ' + clipboard.text);
+          if (clipboard.urls && clipboard.urls.length > 0) {
+            addLink(clipboard.urls[1]);
+          }
+        }
       });
     }
   }
@@ -176,21 +201,26 @@ jQuery.hotkeys.options.filterContentEditable = false;
     console.log('autocompleteUpdateLink:', linkName);
 
     // Add link to links
-    var $link = $(SPOTLIGHT_LINK_SELECTOR);
-    $link.attr(SPOTLIGHT_LINK_DATA_ATTR, linkName);
-
-    // TODO: Hack
-    var imgsrc = LINK_IMGSRC[1];
-    if (linkName == 'go/engage-hack') {
-      imgsrc = LINK_IMGSRC[0];
-    }
-    $link.html([
-      ' - ',
-      '<img src="' + imgsrc + '" height="16" width="16"/> ',
-      '<a href="http://' + linkName + '" target="_blank">' + linkName + '</a>',
-    ]);
+    addLink(linkName);
 
     return linkName;
+  }
+
+  // Add link to input
+  function addLink(url) {
+    console.log('addLink:', url);
+
+    // Add link to links
+    var $link = $(SPOTLIGHT_LINK_SELECTOR);
+    $link.attr(SPOTLIGHT_LINK_DATA_ATTR, url);
+    $link.html([
+      ' - ',
+      '<img src="https://www.google.com/s2/favicons?domain=' + url + '" height="16" width="16"/> ',
+      '<a href="' + url + '" target="_blank">' + url + '</a>',
+    ]);
+    getPageTitleForURL(url, function(name) {
+      $link.find('a').text(name);
+    });
   }
 
   function removeLink() {
@@ -551,79 +581,79 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // }
 
   // Process autotext expansion and replace text
-  function processAutoTextExpansion(shortcut, autotext, lastChar, textInput, capitalization)
-  {
-    console.log('processAutoTextExpansion:', autotext, capitalization);
-
-    // Check if shortcut exists and should be triggered
-    if (autotext && textInput)
-    {
-      // If shortcuts are disabled, abort early
-      if (disableShortcuts) {
-        return;
-      }
-
-      // Update / get clipboard text
-      getClipboardData(function()
-      {
-        // // Handle clipboard pastes
-        // autotext = processClips(autotext);
-        //
-        // // Handle moment.js dates
-        // autotext = processDates(autotext);
-        //
-        // // Handle %url% macro
-        // autotext = processUrls(autotext);
-
-        // Adjust capitalization
-        switch (capitalization)
-        {
-          case ENUM_CAPITALIZATION_FIRST:
-            autotext = autotext.charAt(0).toUpperCase() + autotext.slice(1);
-            break;
-
-          case ENUM_CAPITALIZATION_ALL:
-            autotext = autotext.toUpperCase();
-            break;
-
-          default: break;
-        }
-
-        // Setup for processing
-        var domain = window.location.host;
-        console.log('textInput: ', textInput);
-
-        // If input or textarea field, can easily change the val
-        if (textInput.nodeName == 'TEXTAREA' || textInput.nodeName == 'INPUT')
-        {
-          // Add whitespace if was last character
-          if (WHITESPACE_REGEX.test(lastChar)) {
-            autotext += lastChar;
-          }
-
-          replaceTextRegular(shortcut, autotext, textInput);
-        }
-        else	// Trouble... editable divs & special cases
-        {
-          // Add whitespace if was last character
-          if (lastChar == ' ') {
-            autotext += '&nbsp;';
-          } else if (lastChar == '\t') {
-            autoText += '&#9;';
-          }
-
-          console.log('Domain:', domain);
-          replaceTextContentEditable(shortcut, autotext, findFocusedNode());
-        }
-
-        // Always clear the buffer after a shortcut fires
-        clearTypingBuffer();
-      });	// END - getClipboardData()
-    }	// END - if (autotext)
-    else {  // Error
-      console.log('Invalid input, missing autotext or textinput parameters.');
-    }
-  }
+  // function processAutoTextExpansion(shortcut, autotext, lastChar, textInput, capitalization)
+  // {
+  //   console.log('processAutoTextExpansion:', autotext, capitalization);
+  //
+  //   // Check if shortcut exists and should be triggered
+  //   if (autotext && textInput)
+  //   {
+  //     // If shortcuts are disabled, abort early
+  //     if (disableShortcuts) {
+  //       return;
+  //     }
+  //
+  //     // Update / get clipboard text
+  //     getClipboardData(function()
+  //     {
+  //       // // Handle clipboard pastes
+  //       // autotext = processClips(autotext);
+  //       //
+  //       // // Handle moment.js dates
+  //       // autotext = processDates(autotext);
+  //       //
+  //       // // Handle %url% macro
+  //       // autotext = processUrls(autotext);
+  //
+  //       // Adjust capitalization
+  //       switch (capitalization)
+  //       {
+  //         case ENUM_CAPITALIZATION_FIRST:
+  //           autotext = autotext.charAt(0).toUpperCase() + autotext.slice(1);
+  //           break;
+  //
+  //         case ENUM_CAPITALIZATION_ALL:
+  //           autotext = autotext.toUpperCase();
+  //           break;
+  //
+  //         default: break;
+  //       }
+  //
+  //       // Setup for processing
+  //       var domain = window.location.host;
+  //       console.log('textInput: ', textInput);
+  //
+  //       // If input or textarea field, can easily change the val
+  //       if (textInput.nodeName == 'TEXTAREA' || textInput.nodeName == 'INPUT')
+  //       {
+  //         // Add whitespace if was last character
+  //         if (WHITESPACE_REGEX.test(lastChar)) {
+  //           autotext += lastChar;
+  //         }
+  //
+  //         replaceTextRegular(shortcut, autotext, textInput);
+  //       }
+  //       else	// Trouble... editable divs & special cases
+  //       {
+  //         // Add whitespace if was last character
+  //         if (lastChar == ' ') {
+  //           autotext += '&nbsp;';
+  //         } else if (lastChar == '\t') {
+  //           autoText += '&#9;';
+  //         }
+  //
+  //         console.log('Domain:', domain);
+  //         replaceTextContentEditable(shortcut, autotext, findFocusedNode());
+  //       }
+  //
+  //       // Always clear the buffer after a shortcut fires
+  //       clearTypingBuffer();
+  //     });	// END - getClipboardData()
+  //   }	// END - if (autotext)
+  //   else {  // Error
+  //     console.log('Invalid input, missing autotext or textinput parameters.');
+  //   }
+  // }
 
   // Specific handler for regular textarea and input elements
   function replaceTextRegular(shortcut, autotext, textInput)
@@ -775,6 +805,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   }
 
   // Get selected text
+  // Source: https://stackoverflow.com/questions/5379120/get-the-highlighted-selected-text
   function getSelectionText() {
       var text = "";
       if (window.getSelection) {
@@ -783,6 +814,35 @@ jQuery.hotkeys.options.filterContentEditable = false;
           text = document.selection.createRange().text;
       }
       return text;
+  }
+
+  // Get selected html
+  // Source: https://stackoverflow.com/questions/5083682/get-selected-html-in-browser-via-javascript
+  function getSelectionHTML() {
+    var range, data = {};
+    var regex = /(?:href="|')(.*?)(?:"|')/gi;
+    if (document.selection && document.selection.createRange) {
+      console.log('doc');
+      range = document.selection.createRange();
+      data.html = range.htmlText;
+      data.text = range.toString();
+      data.urls = regex.exec(data.html);
+    }
+    else if (window.getSelection) {
+      console.log('win');
+      var selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        range = selection.getRangeAt(0);
+        var clonedSelection = range.cloneContents();
+        var div = document.createElement('div');
+        div.appendChild(clonedSelection);
+        data.html = div.innerHTML;
+        data.text = div.textContent;
+        data.urls = regex.exec(data.html);
+      }
+    }
+    console.log(data);
+    return data;
   }
 
   // Cross-browser solution for getting cursor position
@@ -970,6 +1030,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
   //   // Return processed dates
   //   return processedText.join('');
   // }
+
+  // Get page title for url
+  function getPageTitleForURL(url, completionBlock) {
+    chrome.runtime.sendMessage({
+      request:'getPageTitle',
+      url: url,
+    }, function(data) {
+      console.log('getPageTitle:', data);
+      if (completionBlock) {
+        completionBlock(data);
+      }
+    });
+  }
 
   // Get what's stored in the clipboard
   function getClipboardData(completionBlock) {

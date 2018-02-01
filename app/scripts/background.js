@@ -42,6 +42,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
       sendResponse({ paste:pasteFromClipboard() });
       break;
 
+    case 'getPageTitle':
+      getPageTitle(request.url, sendResponse);
+      // sendResponse({ title:getPageTitle(request.url) });
+      break;
+
     // Set browser action badge text (up to 4 chars)
     case 'setBadgeText':
       chrome.browserAction.setBadgeText({text: request.text});
@@ -52,6 +57,24 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
       break;
   }
 });
+
+// Get page title of a url
+function getPageTitle(url, callback) {
+  console.log('getPageTitle:', url);
+  $.ajax({
+    url: url,
+    // async: true,
+    complete: function(data) {
+      // console.log(data.responseText);
+      var titleMatch = data.responseText.match(/<title>(.*?)<\/title>/);
+      console.log('title matches:', titleMatch);
+      if (callback) {
+        callback({title: (titleMatch && titleMatch.length)
+          ? titleMatch[1] : ''});
+      }
+    }
+  });
+}
 
 chrome.identity.getAuthToken({
     interactive: false
@@ -177,17 +200,25 @@ function injectScript(tab)
 function pasteFromClipboard()
 {
   // Create element to paste content into
-  document.querySelector('body').innerHTML += '<textarea id="clipboard"></textarea>';
-  var clipboard = document.getElementById('clipboard');
-  clipboard.select();
+  $('body').html('<div id="clipboard" contenteditable="true"></div>');
+  var $clip = $('#clipboard');
+  $clip.focus();
 
-  // Execute paste
-  var result;
+  // Execute paste and get data
+  var text, links = [];
   if (document.execCommand('paste', true)) {
-    result = clipboard.value;
+    // console.log('text:', $clip.text());
+    text = $clip.text();
+    // console.log('html:', $clip.html());
+    var regex = /(?:href="|')(.*?)(?:"|')/gi;
+    links = regex.exec($clip.html());
+    console.log('urls:', links);
   }
 
   // Cleanup and return value
   clipboard.parentNode.removeChild(clipboard);
-  return result;
+  return {
+    text: text,
+    urls: links,
+  };
 }
