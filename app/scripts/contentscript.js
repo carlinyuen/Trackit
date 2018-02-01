@@ -30,6 +30,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , EVENT_NAME_CLICK = 'click.' + NAMESPACE
     , EVENT_NAME_FOCUS = 'focus.' + NAMESPACE
     , EVENT_NAME_LOAD = 'load.' + NAMESPACE
+    , EVENT_NAME_COPY = 'copy.' + NAMESPACE
+    , EVENT_NAME_PASTE = 'paste.' + NAMESPACE
     , EVENT_NAME_INSERTED = 'DOMNodeInserted'
 
     , SPOTLIGHT_INPUT = '*[contenteditable=true],textarea,input'
@@ -94,6 +96,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
       shorcutEvent = event;
     }
 
+    console.log('copyEvent', copyEvent);
+
     preSpotlightTarget = event.target;
 
     // Check if there's already a spotlight bar, and if so, just focus
@@ -149,6 +153,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     updateAutocompletes($textInput);
     updateInputWithClipboardSelection($textInput);
+  }
+
+  // When a user pastes into the input field
+  function pasteHandler(event) {
+    console.log('pasted');
+
+    getClipboardData(function() {
+      if (clipboard.urls && clipboard.urls.length > 0) {
+        addLink(clipboard.urls[1]);
+      }
+    });
   }
 
   // Update autocompletes for input field
@@ -222,7 +237,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function updateInputWithClipboardSelection($textInput) {
     var selectionData = getSelectionHTML(),
       value = $textInput.val();
-    if (selectionData && value.indexOf(selectionData.text) < 0) {
+    if (selectionData.text && value.indexOf(selectionData.text) < 0) {
       $textInput.val(selectionData.text);
       if (selectionData.urls && selectionData.urls.length > 0) {
         addLink(selectionData.urls[1]);
@@ -244,7 +259,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function autocompleteUpdateLink(linkURL) {
     console.log('autocompleteUpdateLink:', linkURL);
     addLink(linkURL);    // Add link to links
-    return linkURL;      // Do not add to actual input
+    return '';      // Do not add to actual input
   }
 
   // Add link to input
@@ -440,15 +455,15 @@ jQuery.hotkeys.options.filterContentEditable = false;
         var $spotlight = $(SPOTLIGHT_SELECTOR)
           , $link = $(SPOTLIGHT_LINK_SELECTOR)
           , $dataSpan = $(SPOTLIGHT_DATA_SELECTOR);
-        if ($dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
+        if ($link.attr(SPOTLIGHT_LINK_DATA_ATTR)) {
+          removeLink();
+          console.log('removed link data attr');
+        } else if ($dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
           $dataSpan.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
           console.log('removed type data attr');
         } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
           $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
           console.log('removed project data attr');
-        } else {
-          removeLink();
-          console.log('removed link data attr');
         }
         updateSpotlightPlaceholderText();
       }
@@ -868,17 +883,22 @@ jQuery.hotkeys.options.filterContentEditable = false;
       return text;
   }
 
+  // Extract urls from html href
+  function extractHrefURLs(html) {
+    var regex = /(?:href="|')(.*?)(?:"|')/gi;
+    return regex.exec(html);
+  }
+
   // Get selected html
   // Source: https://stackoverflow.com/questions/5083682/get-selected-html-in-browser-via-javascript
   function getSelectionHTML() {
     var range, data = {};
-    var regex = /(?:href="|')(.*?)(?:"|')/gi;
     if (document.selection && document.selection.createRange) {
       console.log('doc');
       range = document.selection.createRange();
       data.html = range.htmlText;
       data.text = range.toString();
-      data.urls = regex.exec(data.html);
+      data.urls = extractHrefURLs(data.html);
     }
     else if (window.getSelection) {
       console.log('win');
@@ -890,10 +910,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
         div.appendChild(clonedSelection);
         data.html = div.innerHTML;
         data.text = div.textContent;
-        data.urls = regex.exec(data.html);
+        data.urls = extractHrefURLs(data.html);
       }
     }
-    console.log(data);
+    console.log('selectionhtml:', data);
     return data;
   }
 
@@ -1145,6 +1165,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     $target.on(EVENT_NAME_KEYUP, keyUpHandler);
     $target.on(EVENT_NAME_BLUR, clearTypingBuffer);
     $target.on(EVENT_NAME_CLICK, clearTypingBuffer);
+    $target.on(EVENT_NAME_PASTE, pasteHandler);
   }
 
   // Detach listener for keypresses
@@ -1172,7 +1193,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
   // Attach listener for copy
   function addCopyListener() {
-    $(document).on('copy', function(event) {
+    $(document).on(EVENT_NAME_COPY, function(event) {
       console.log('copied');
       copyEvent = event;
     });
