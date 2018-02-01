@@ -1,7 +1,10 @@
 'use strict';
 
 console.log('Options page');
-var OAUTH_TOKEN;
+var NUM_RECENT_BOOKMARKS = 50;
+var OAUTH_TOKEN
+  , RECENT_BOOKMARKS
+;
 
 chrome.runtime.onInstalled.addListener(function (details) {
   console.log('previousVersion', details.previousVersion);
@@ -47,6 +50,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
       // sendResponse({ title:getPageTitle(request.url) });
       break;
 
+    case 'getRecentBookmarks':
+      getRecentBookmarks(sendResponse);
+      break;
+
     // Set browser action badge text (up to 4 chars)
     case 'setBadgeText':
       chrome.browserAction.setBadgeText({text: request.text});
@@ -56,7 +63,23 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
       console.log('Unknown request received:', request);
       break;
   }
+
+  return true;
 });
+
+// Update link data Source
+function getRecentBookmarks(callback) {
+  console.log('getRecentBookmarks');
+  chrome.bookmarks.getRecent(NUM_RECENT_BOOKMARKS, function(results) {
+    if (results) {
+      RECENT_BOOKMARKS = results;
+      console.log(RECENT_BOOKMARKS);
+      if (callback) {
+        callback(RECENT_BOOKMARKS);
+      }
+    }
+  });
+}
 
 // Get page title of a url
 function getPageTitle(url, callback) {

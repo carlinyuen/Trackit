@@ -106,6 +106,10 @@
 
 .atwho-view ul li {
   line-height: 16px;
+  width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .atwho-view ul li img {
   vertical-align: middle;

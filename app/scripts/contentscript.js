@@ -20,6 +20,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , ANIMATION_SLOW = 1000
     , TIME_SHOW_CROUTON = 1000 * 2       // Show croutons for 2s
     , WHITESPACE_REGEX = /(\s)/
+    , NUM_RECENT_BOOKMARKS = 100        // Cache up to 100 recent bookmarks
 
     , NAMESPACE = 'trackit'
     , EVENT_NAME_KEYPRESS = 'keypress.' + NAMESPACE
@@ -55,14 +56,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     , PERSON_DATA = ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob', 'seth']
     , PROJECT_DATA = ['engage', 'collaboration', 'huddle']
-    , LINK_DATA = ['go/engage-hack', 'go/team-collaboration']
-    , LINK_IMGSRC = [
-      chrome.extension.getURL('images/icon-presentation.png'),
-      chrome.extension.getURL('images/icon-document.png'),
-    ]
+    , LINK_DATA = [{
+        name:'http://go/engage-hack',
+        imgsrc: chrome.extension.getURL('images/icon-presentation.png'),
+      }, {
+        name:'http://go/team-collaboration',
+        imgsrc: chrome.extension.getURL('images/icon-document.png'),
+      }]
 
     , URL_XSRF_TOKEN = 'https://huddle.corp.google.com/_/engage/token?rt=j'
     , HEADER_XSRF = 'X-Framework-Xsrf-Token'
+    , URL_FAVICON_FETCH = 'https://www.google.com/s2/favicons?domain='
   ;
 
   var xsrfToken;          // Get token to talk to Engage
@@ -71,6 +75,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
   var keyPressEvent;      // Keep track of keypress event to prevent re-firing
   var keyUpEvent;         // Keep track of keyup event to prevent re-firing
   var preSpotlightTarget; // Keep track of element focus pre-spotlight
+  var bookmarks;          // Cache bookmarks to use for links
+  var linkAutocomplete;   // Map data for link autocomplete
   var clipboard;          // Keep track of what's in the clipboard
   var clipboardTextLastUsed; // Keep track of what was last used in clipboard
   var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
@@ -91,14 +97,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     // Check if there's already a spotlight bar, and if so, just focus
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
-    if ($textInput.length > 0) {
-      updateInputWithClipboardSelection($textInput);
-      $(SPOTLIGHT_SELECTOR).fadeIn(ANIMATION_FAST, function() {
-        $textInput.focus();
-      });
-    } else {
-      addSpotlightBar('body');
-    }
+    getRecentBookmarks(function() {
+      if ($textInput.length > 0) {
+        updateInputWithClipboardSelection($textInput);
+        removeLink();
+        $(SPOTLIGHT_SELECTOR).fadeIn(ANIMATION_FAST, function() {
+          $textInput.focus();
+        });
+      } else {
+        addSpotlightBar('body');
+      }
+    });
   }
 
   // Add spotlight bar to element
@@ -136,12 +145,33 @@ jQuery.hotkeys.options.filterContentEditable = false;
       flickering: false,
     });
 
+    updateAutocompletes($textInput);
+
+    // Check clipboard/selection for content to pre-populate
+    updateInputWithClipboardSelection($textInput);
+  }
+
+  // Update autocompletes for input field
+  //  @param $textInput should be a jquery object
+  function updateAutocompletes($textInput) {
     // Trigger on keywords
-    var linkMap = $.map(LINK_DATA, function(value, i) {
+    // var linkMap = $.map(LINK_DATA, function(value, i) {
+    //   return {
+    //     id: i,
+    //     name: value.name,
+    //     imgsrc: value.imgsrc
+    //   };
+    // });
+    if (!bookmarks) {
+      bookmarks = LINK_DATA;
+    }
+    console.log()
+    linkAutocomplete = $.map(bookmarks, function(value, i) {
       return {
         id: i,
-        name: value,
-        imgsrc: LINK_IMGSRC[i]
+        name: value.title,
+        url: value.url,
+        imgsrc: URL_FAVICON_FETCH + value.url,
       };
     });
     $textInput.atwho({
@@ -149,15 +179,26 @@ jQuery.hotkeys.options.filterContentEditable = false;
       data: PERSON_DATA,
     }).atwho({
       at: 'go/',
-      data: linkMap,
-      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
-      insertTpl: '${name}',
+      data: linkAutocomplete,
+      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} - ${url} </li>',
+      insertTpl: '${url}',
       callbacks: {
-        beforeInsert: autocompleteUpdateLink
+        filter: function(query, data, searchKey) {
+          // console.log('filter:', query, data, searchKey);
+          return $.grep(data, function(value, i) {
+            if (value.name.toLowerCase().indexOf('go/' + query.toLowerCase()) >= 0
+              || value.url.toLowerCase().indexOf('go/' + query.toLowerCase()) >= 0) {
+              return true;
+            } else {
+              return false;
+            }
+          });
+        },
+        beforeInsert: autocompleteUpdateLink,
       }
     }).atwho({
       at: '/',
-      data: linkMap,
+      data: linkAutocomplete,
       displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
       insertTpl: '${name}',
       callbacks: {
@@ -170,9 +211,6 @@ jQuery.hotkeys.options.filterContentEditable = false;
         beforeInsert: autocompleteUpdateProject
       }
     });
-
-    // Check clipboard/selection for content to pre-populate
-    updateInputWithClipboardSelection($textInput);
   }
 
   // Checks for content in clipboard/selection to add to field
@@ -199,13 +237,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
   }
 
   // Add link from autocomplete
-  function autocompleteUpdateLink(linkName) {
-    console.log('autocompleteUpdateLink:', linkName);
-
-    // Add link to links
-    addLink(linkName);
-
-    return linkName;
+  function autocompleteUpdateLink(linkURL) {
+    console.log('autocompleteUpdateLink:', linkURL);
+    addLink(linkURL);    // Add link to links
+    return linkURL;      // Do not add to actual input
   }
 
   // Add link to input
@@ -221,11 +256,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
     $link.attr(SPOTLIGHT_LINK_DATA_ATTR, url);
     $link.html([
       ' - ',
-      '<img src="https://www.google.com/s2/favicons?domain=' + url + '" height="16" width="16"/> ',
+      '<img src="' + URL_FAVICON_FETCH + url + '" height="16" width="16"/> ',
       '<a href="' + url + '" target="_blank">' + url + '</a>',
     ]);
     getPageTitleForURL(url, function(name) {
-      $link.find('a').text(name);
+      $link.find('a').text(name.title + ' <' + url + '>');
     });
   }
 
@@ -1053,6 +1088,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
       console.log('getPageTitle:', data);
       if (completionBlock) {
         completionBlock(data);
+      }
+    });
+  }
+
+  // Get recent bookmarks
+  function getRecentBookmarks(completionBlock) {
+    chrome.runtime.sendMessage({
+      request:'getRecentBookmarks'
+    }, function(data) {
+      console.log('getRecentBookmarks:', data);
+      bookmarks = data;
+      if (completionBlock) {
+        completionBlock();
       }
     });
   }
