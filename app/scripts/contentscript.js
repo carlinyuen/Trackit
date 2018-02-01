@@ -72,6 +72,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   var keyUpEvent;         // Keep track of keyup event to prevent re-firing
   var preSpotlightTarget; // Keep track of element focus pre-spotlight
   var clipboard;          // Keep track of what's in the clipboard
+  var clipboardTextLastUsed; // Keep track of what was last used in clipboard
   var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
   var guideState = 0;     // Flag to keep track of state of user onboarding
 
@@ -111,7 +112,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
-        // .on(EVENT_NAME_BLUR, hideSpotlight)
+        .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .append($(d.createElement('span'))
         .addClass(SPOTLIGHT_DATA_CLASS)
@@ -180,17 +181,18 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var selectionData = getSelectionHTML(),
       value = $textInput.val();
     if (selectionData && value.indexOf(selectionData.text) < 0) {
-      $textInput.val(value + ' ' + selectionData.text);
+      $textInput.val(selectionData.text);
       if (selectionData.urls && selectionData.urls.length > 0) {
         addLink(selectionData.urls[1]);
       }
     } else {
       getClipboardData(function() {
-        if (value.indexOf(clipboard.text) < 0) {
-          $textInput.val(value + ' ' + clipboard.text);
+        if (value.indexOf(clipboard.text) < 0 && clipboard.text != clipboardTextLastUsed) {
+          $textInput.val(clipboard.text);
           if (clipboard.urls && clipboard.urls.length > 0) {
             addLink(clipboard.urls[1]);
           }
+          clipboardTextLastUsed = clipboard.text;
         }
       });
     }

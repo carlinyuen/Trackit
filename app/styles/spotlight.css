@@ -10,7 +10,7 @@
 	border-style: solid;
 	font: bold 16px/16px 'lucida sans', 'trebuchet MS', 'Tahoma';
 	border-color: #dedede #bababa #aaa #bababa;
-	box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 24px 84px #666;
+	box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 24px 84px #222;
 	border-radius: 10px;
 	background-color: #f6f6f6;
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#f6f6f6), to(#eae8e8));
