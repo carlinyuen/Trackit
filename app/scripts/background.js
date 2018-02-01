@@ -255,6 +255,12 @@ function pasteFromClipboard()
     links = regex.exec($clip.html());
     console.log('urls:', links);
   }
+  if (!links) {
+    links = [];
+  }
+  if (text.match(/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g)) {
+    links.push(text);
+  }
 
   // Cleanup and return value
   clipboard.parentNode.removeChild(clipboard);

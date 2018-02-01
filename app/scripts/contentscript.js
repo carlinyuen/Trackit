@@ -105,8 +105,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
     // getRecentBookmarks(function() {
     getRecentHistory(function() {
       if ($textInput.length > 0) {
-        updateInputWithClipboardSelection($textInput);
         removeLink();
+        updateInputWithClipboardSelection($textInput);
         $(SPOTLIGHT_SELECTOR).fadeIn(ANIMATION_FAST, function() {
           $textInput.focus();
         });
@@ -127,7 +127,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
-        .on(EVENT_NAME_BLUR, hideSpotlight)
+        // .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .append($(d.createElement('span'))
         .addClass(SPOTLIGHT_DATA_CLASS)
@@ -161,7 +161,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     getClipboardData(function() {
       if (clipboard.urls && clipboard.urls.length > 0) {
-        addLink(clipboard.urls[1]);
+        addLink(clipboard.urls[(clipboard.urls.length > 1 ? 1 : 0)]);
       }
     });
   }
@@ -237,21 +237,23 @@ jQuery.hotkeys.options.filterContentEditable = false;
   function updateInputWithClipboardSelection($textInput) {
     var selectionData = getSelectionHTML(),
       value = $textInput.val();
-    if (selectionData.text && value.indexOf(selectionData.text) < 0) {
+
+    // Check if they recently copied first
+    if (copyEvent) {
+      getClipboardData(function() {
+        $textInput.val(clipboard.text);
+        if (clipboard.urls && clipboard.urls.length > 0) {
+          addLink(clipboard.urls[(clipboard.urls.length > 1 ? 1 : 0)]);
+        }
+        copyEvent = false;
+      });
+    }
+    else if (selectionData.text)
+    {
       $textInput.val(selectionData.text);
       if (selectionData.urls && selectionData.urls.length > 0) {
-        addLink(selectionData.urls[1]);
+        addLink(selectionData.urls[(selectionData.urls.length > 1 ? 1 : 0)]);
       }
-    } else {
-      getClipboardData(function() {
-        if (value.indexOf(clipboard.text) < 0 && copyEvent) {
-          $textInput.val(clipboard.text);
-          if (clipboard.urls && clipboard.urls.length > 0) {
-            addLink(clipboard.urls[1]);
-          }
-          copyEvent = false;
-        }
-      });
     }
   }
 
@@ -889,6 +891,14 @@ jQuery.hotkeys.options.filterContentEditable = false;
     return regex.exec(html);
   }
 
+  // Check if text is url
+  function isURL(text) {
+    if (text) {
+      return text.match(/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
+    }
+    return false;
+  }
+
   // Get selected html
   // Source: https://stackoverflow.com/questions/5083682/get-selected-html-in-browser-via-javascript
   function getSelectionHTML() {
@@ -912,6 +922,13 @@ jQuery.hotkeys.options.filterContentEditable = false;
         data.text = div.textContent;
         data.urls = extractHrefURLs(data.html);
       }
+    }
+    // Check if actual text is url
+    if (!data.urls) {
+      data.urls = [];
+    }
+    if (isURL(data.text)) {
+      data.urls.push(data.text);
     }
     console.log('selectionhtml:', data);
     return data;
