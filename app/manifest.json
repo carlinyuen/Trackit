@@ -30,7 +30,8 @@
     "tabCapture",
     "notifications",
     "identity",
-    "clipboardRead"
+    "clipboardRead",
+    "history"
   ],
   "options_ui": {
     "page": "options.html",

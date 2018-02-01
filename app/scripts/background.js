@@ -1,10 +1,8 @@
 'use strict';
 
 console.log('Options page');
-var NUM_RECENT_BOOKMARKS = 50;
-var OAUTH_TOKEN
-  , RECENT_BOOKMARKS
-;
+var NUM_RECENT = 50;
+var OAUTH_TOKEN;
 
 chrome.runtime.onInstalled.addListener(function (details) {
   console.log('previousVersion', details.previousVersion);
@@ -54,6 +52,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
       getRecentBookmarks(sendResponse);
       break;
 
+      case 'getRecentHistory':
+      getRecentHistory(request.query, sendResponse);
+      break;
+
     // Set browser action badge text (up to 4 chars)
     case 'setBadgeText':
       chrome.browserAction.setBadgeText({text: request.text});
@@ -67,15 +69,31 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
   return true;
 });
 
-// Update link data Source
+// Get recent bookmarks
 function getRecentBookmarks(callback) {
   console.log('getRecentBookmarks');
-  chrome.bookmarks.getRecent(NUM_RECENT_BOOKMARKS, function(results) {
+  chrome.bookmarks.getRecent(NUM_RECENT, function(results) {
     if (results) {
-      RECENT_BOOKMARKS = results;
-      console.log(RECENT_BOOKMARKS);
+      console.log(results);
       if (callback) {
-        callback(RECENT_BOOKMARKS);
+        callback(results);
+      }
+    }
+  });
+}
+
+// Get recent page visits
+function getRecentHistory(search, callback) {
+  console.log('getRecentHistory');
+  var query = {
+    text: (search ? search : ''),
+    maxResults: NUM_RECENT,
+  };
+  chrome.history.search(query, function(results) {
+    if (results) {
+      console.log(results);
+      if (callback) {
+        callback(results);
       }
     }
   });

@@ -76,9 +76,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
   var keyUpEvent;         // Keep track of keyup event to prevent re-firing
   var preSpotlightTarget; // Keep track of element focus pre-spotlight
   var bookmarks;          // Cache bookmarks to use for links
+  var history;            // Cache recent history to use for links
   var linkAutocomplete;   // Map data for link autocomplete
   var clipboard;          // Keep track of what's in the clipboard
-  var clipboardTextLastUsed; // Keep track of what was last used in clipboard
+  var copyEvent;          // Keep track if user copied something recently
   var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
   var guideState = 0;     // Flag to keep track of state of user onboarding
 
@@ -97,7 +98,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     // Check if there's already a spotlight bar, and if so, just focus
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
-    getRecentBookmarks(function() {
+    // getRecentBookmarks(function() {
+    getRecentHistory(function() {
       if ($textInput.length > 0) {
         updateInputWithClipboardSelection($textInput);
         removeLink();
@@ -146,8 +148,6 @@ jQuery.hotkeys.options.filterContentEditable = false;
     });
 
     updateAutocompletes($textInput);
-
-    // Check clipboard/selection for content to pre-populate
     updateInputWithClipboardSelection($textInput);
   }
 
@@ -162,15 +162,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
     //     imgsrc: value.imgsrc
     //   };
     // });
-    if (!bookmarks) {
-      bookmarks = LINK_DATA;
+    // if (!bookmarks) {
+    //   bookmarks = LINK_DATA;
+    // }
+    var links = $.merge(history, bookmarks);
+    if (!links) {
+      links = LINK_DATA;
     }
-    console.log()
-    linkAutocomplete = $.map(bookmarks, function(value, i) {
+    linkAutocomplete = $.map(links, function(value, i) {
       return {
         id: i,
         name: value.title,
         url: value.url,
+        hostname: new URL(value.url).hostname,
         imgsrc: URL_FAVICON_FETCH + value.url,
       };
     });
@@ -180,7 +184,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }).atwho({
       at: 'go/',
       data: linkAutocomplete,
-      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} - ${url} </li>',
+      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${hostname} : ${name} - ${url}</li>',
       insertTpl: '${url}',
       callbacks: {
         filter: function(query, data, searchKey) {
@@ -199,8 +203,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }).atwho({
       at: '/',
       data: linkAutocomplete,
-      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${name} </li>',
-      insertTpl: '${name}',
+      displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${hostname} : ${name} - ${url}</li>',
+      insertTpl: '${url}',
       callbacks: {
         beforeInsert: autocompleteUpdateLink
       }
@@ -225,12 +229,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
       }
     } else {
       getClipboardData(function() {
-        if (value.indexOf(clipboard.text) < 0 && clipboard.text != clipboardTextLastUsed) {
+        if (value.indexOf(clipboard.text) < 0 && copyEvent) {
           $textInput.val(clipboard.text);
           if (clipboard.urls && clipboard.urls.length > 0) {
             addLink(clipboard.urls[1]);
           }
-          clipboardTextLastUsed = clipboard.text;
+          copyEvent = false;
         }
       });
     }
@@ -1092,6 +1096,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
     });
   }
 
+  // Get recent history
+  function getRecentHistory(completionBlock) {
+    chrome.runtime.sendMessage({
+      request:'getRecentHistory'
+    }, function(data) {
+      console.log('getRecentHistory:', data);
+      history = data;
+      if (completionBlock) {
+        completionBlock();
+      }
+    });
+  }
+
   // Get recent bookmarks
   function getRecentBookmarks(completionBlock) {
     chrome.runtime.sendMessage({
@@ -1151,6 +1168,14 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Detach listener for spotlight shortcut
   function removeSpotlightListener() {
     $(document).off(EVENT_NAME_KEYDOWN);
+  }
+
+  // Attach listener for copy
+  function addCopyListener() {
+    $(document).on('copy', function(event) {
+      console.log('copied');
+      copyEvent = event;
+    });
   }
 
   // Create and show a warning message crouton that can be dismissed or autohide
@@ -1214,6 +1239,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
   // Document ready function
   $(function() {
     addSpotlightListener();         // Add listener for keyboard shortcut
+    getRecentBookmarks();
+    addCopyListener();
     getXsrfToken();
 	});
 
