@@ -16,11 +16,11 @@
     "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_TWO": {
-    "message": "Let's try \"D: decision on blue #engage\"",
+    "message": "Let's try \"#engage D: make it blue\"",
     "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_THREE": {
-    "message": "\"U: Mocks updated at go\/engage-mocks\"",
+    "message": "\"U: updated go\/engage-mocks\"",
     "description": "Placeholder text that goes into the spotlight structured input bar to guide users"
   },
   "SPOTLIGHT_PLACEHOLDER_FOUR": {
