@@ -332,9 +332,10 @@ var trackit = (function() {
     // Render the basic list
     $.each(projectsList, function(name, proj) {
       console.log(name, proj);
-      var el = $(document.createElement('div'))
+      var projContainer = $(document.createElement('div'))
         .addClass('project row')
         .attr('data-projectid', name)
+        // Add header
         .append($(document.createElement('h3'))
           .addClass('projectName col-md-2')
           .append($(document.createElement('span'))
@@ -353,9 +354,41 @@ var trackit = (function() {
               });
             })
           )
-        )
-      projectPortfolio.append(el);
+        ); // -- end header
+      // Add all types
+      $.each(proj, function(type, artifacts) {
+        var artifactCategory = $(document.createElement('div'))
+          .addClass('container type')
+          .append($(document.createElement('h4'))
+            .text(type)
+          )
+          .appendTo(projContainer);
+        var artifactContainer = $(document.createElement('ul'))
+          .addClass('row')
+          .appendTo(artifactCategory);
+        $.each(artifacts, function(i, artifact) {
+          var artifactElement = $(document.createElement('li'))
+            .append($(document.createElement('span'))
+              .addClass('artifactContent')
+              .text(artifact.content)
+            );
+          if (artifact.link) {
+            artifactElement.append($(document.createElement('span'))
+              .addClass('artifactLink')
+              .html('<img src="' + artifact.link.icon + '" height="16" width="16"/> ',
+              '<a href="' + artifact.link.url + '" target="_blank">' + artifact.link.title + '</a>')
+            );
+          }
+          if (artifact.owners) {
+            artifactElement.attr('data-owners', artifact.owners.join(', '));
+          }
+          artifactElement.appendTo(artifactContainer);
+        });
+      });
+      projectPortfolio.append(projContainer);
     });
+
+    projectsContainer.fadeIn();
   }
 
   // Remove a project
@@ -754,7 +787,7 @@ var trackit = (function() {
         } else {
           loadProjects();
         }
-        changeState(STATE_START);
+        changeState(STATE_AUTHTOKEN_ACQUIRED);
       });
       getData();
     }
