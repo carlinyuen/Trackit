@@ -124,9 +124,25 @@ body {
 .projects .project {
   background: #222b;
   border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 24px;
 }
 .projects .project .type {
   color: #eee;
+}
+.projects .project .type .actionitem {
+  background-color: #f66;
+}
+.projects .project .type .decision {
+  background-color: #6B6;
+}
+.projects .project .type .decision {
+  background-color: #66B;
+}
+.projects .project .type .artifactLink {
+}
+.projects .project .type .artifactLink a {
+  color: #bbf;
 }
 
 /* Popup and modals */

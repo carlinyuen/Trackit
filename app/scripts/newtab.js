@@ -335,32 +335,38 @@ var trackit = (function() {
       var projContainer = $(document.createElement('div'))
         .addClass('project row')
         .attr('data-projectid', name)
-        // Add header
-        .append($(document.createElement('h3'))
-          .addClass('projectName col-md-2')
-          .append($(document.createElement('span'))
-            .addClass('label label-' + proj.color)
-            .text(name)
-          )
-          .append($(document.createElement('button'))
-            .addClass('removeProject btn btn-xs')
-            .html('<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>')
-            .click(function() {
-              var projectID = $(this).parents('.project').attr('data-projectid');
-              showModalPopup('Are you sure you want to remove this project?', true, function(confirm) {
-                if (confirm) {
-                  removeProject(projectID);
-                }
-              });
-            })
-          )
-        ); // -- end header
+        .append($(document.createElement('div'))
+          .addClass('container col-md-12')
+          // Add header
+          .append($(document.createElement('h3'))
+            .addClass('projectName row')
+            .append($(document.createElement('span'))
+              .addClass('label label-' + proj.color)
+              .text(name)
+            )
+            .append($(document.createElement('button'))
+              .addClass('removeProject btn btn-xs')
+              .html('<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>')
+              .click(function() {
+                var projectID = $(this).parents('.project').attr('data-projectid');
+                showModalPopup('Are you sure you want to remove this project?', true, function(confirm) {
+                  if (confirm) {
+                    removeProject(projectID);
+                  }
+                });
+              })
+            )
+        )
+      ); // -- end header
       // Add all types
       $.each(proj, function(type, artifacts) {
         var artifactCategory = $(document.createElement('div'))
-          .addClass('container type')
+          .addClass('container type col-md-12')
           .append($(document.createElement('h4'))
-            .text(type)
+            .append($(document.createElement('span'))
+              .addClass(type)
+              .text(type)
+            )
           )
           .appendTo(projContainer);
         var artifactContainer = $(document.createElement('ul'))
@@ -373,10 +379,10 @@ var trackit = (function() {
               .text(artifact.content)
             );
           if (artifact.link) {
+            console.log('artifact link:', artifact.link);
             artifactElement.append($(document.createElement('span'))
               .addClass('artifactLink')
-              .html('<img src="' + artifact.link.icon + '" height="16" width="16"/> ',
-              '<a href="' + artifact.link.url + '" target="_blank">' + artifact.link.title + '</a>')
+              .html('<img src="' + artifact.link.icon + '" height="16" width="16"/> <a href="' + artifact.link.url + '" target="_blank">' + artifact.link.title + '</a>')
             );
           }
           if (artifact.owners) {
