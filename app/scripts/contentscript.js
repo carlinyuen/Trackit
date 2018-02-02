@@ -20,7 +20,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , ANIMATION_SLOW = 1000
     , TIME_SHOW_CROUTON = 1000 * 2       // Show croutons for 2s
     , WHITESPACE_REGEX = /(\s)/
-    , NUM_RECENT_BOOKMARKS = 100        // Cache up to 100 recent bookmarks
+    , NUM_TOKEN_MATCHES = 3             // token matches to call it dupe
 
     , ENUM_CROUTON_DEFAULT = 0
     , ENUM_CROUTON_ERROR = 1
@@ -48,6 +48,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_DATA_SELECTOR = '.' + SPOTLIGHT_DATA_CLASS
     , SPOTLIGHT_LINK_CLASS = SPOTLIGHT_ID + '-link'
     , SPOTLIGHT_LINK_SELECTOR = '.' + SPOTLIGHT_LINK_CLASS
+    , SPOTLIGHT_DUPE_CLASS = SPOTLIGHT_ID + '-dupe'
+    , SPOTLIGHT_DUPE_SELECTOR = '.' + SPOTLIGHT_DUPE_CLASS
 
     , SPOTLIGHT_PROJECT_DATA_ATTR = 'data-project'
     , SPOTLIGHT_PROJECT_C = 'COLLABORATION'
@@ -60,6 +62,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_TYPE_U = 'update'
     , SPOTLIGHT_OWNERS_DATA_ATTR = 'data-owners'
     , SPOTLIGHT_LINK_DATA_ATTR = 'data-link'
+    , SPOTLIGHT_DUPE_DATA_ATTR = 'data-dupes'
 
     , PERSON_DATA = ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob', 'seth']
     , TYPE_DATA = [{
@@ -79,11 +82,11 @@ jQuery.hotkeys.options.filterContentEditable = false;
         'presentation': chrome.extension.getURL('images/icon-presentation.png'),
       }
     , LINK_DATA = [{
-        name:'go/engage-hack',
+        title:'go/engage-hack',
         url:'http://go/engage-hack',
         imgsrc: LINK_IMGSRC['presentation'],
       }, {
-        name:'go/team-collaboration',
+        title:'go/team-collaboration',
         url:'http://go/team-collaboration',
         imgsrc: LINK_IMGSRC['document'],
       }]
@@ -104,6 +107,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   var linkAutocomplete;   // Map data for link autocomplete
   var clipboard;          // Keep track of what's in the clipboard
   var copyEvent;          // Keep track if user copied something recently
+  var artifactCache;      // Keep track of previous artifacts created for deduping
   var disableShortcuts;   // Flag to disable shortcuts in case of unreliable state
   var guideState = 0;     // Flag to keep track of state of user onboarding
 
@@ -157,6 +161,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
       )
       .append($(d.createElement('div'))
         .addClass(SPOTLIGHT_LINK_CLASS)
+      )
+      .append($(d.createElement('div'))
+        .addClass(SPOTLIGHT_DUPE_CLASS)
       )
       .submit(spotlightSubmit)
       .hide()
@@ -220,7 +227,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
     // if (!bookmarks) {
     //   bookmarks = LINK_DATA;
     // }
-    var links = $.merge(history, bookmarks, LINK_DATA);
+    var links = $.merge(history, bookmarks);
+    links = $.merge(links, LINK_DATA);
     linkAutocomplete = $.map(links, function(value, i) {
       // console.log(value);
       var imgsrc = (value.imgsrc ? value.imgsrc : getIconForURL(value.url));
@@ -232,6 +240,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         imgsrc: imgsrc,
       };
     });
+    console.log('linkAutocomplete:', linkAutocomplete);
     $textInput.atwho({
       at: '@',
       data: PERSON_DATA,
@@ -369,6 +378,37 @@ jQuery.hotkeys.options.filterContentEditable = false;
     return '';
   }
 
+  // Check for a dupe
+  function getDupes(project, type, content) {
+    var dupes = [];
+    var contentTokens = content.split(' ');
+    if (!type || type == '') {
+      type = 'misc';
+    }
+    // console.log('getDupes:', project, type, content);
+    if (artifactCache && artifactCache[project]) {
+      // console.log('cache:', artifactCache);
+      var arts = artifactCache[project][type];
+      if (arts && arts.length > 0) {
+        // console.log('potential dupes:', arts);
+        $.each(arts, function(i, art) {
+          var artTokens = art.content.split(' ');
+          // console.log('art:', artTokens);
+          // console.log('content:', contentTokens);
+          var tokenMatches = $.grep(artTokens, function(word, index) {
+            return $.inArray(word, contentTokens) !== -1;
+          });
+          // console.log('token matches:', tokenMatches.length);
+          if (tokenMatches.length >= NUM_TOKEN_MATCHES) {
+            // console.log('dupe match:', art)
+            dupes.push(art);
+          }
+        });
+      }
+    }
+    return dupes;
+  }
+
   // Hide the spotlight bar
   function hideSpotlight(callback) {
     console.log('hideSpotlight');
@@ -459,6 +499,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     guideState++;
     updateSpotlightPlaceholderText();
+    clearDupes();
   }
 
   // Save artifact to database
@@ -470,7 +511,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       if (!database) {
         database = {};
       }
-      console.log('before:', database);
+      // console.log('before:', database);
 
       // Merge data
       if (!database[data.project]) {
@@ -490,6 +531,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
           showCrouton(chrome.i18n.getMessage('SAVE_ERROR'), true, ENUM_CROUTON_ERROR);
         } else {
           // showCrouton(chrome.i18n.getMessage('SAVE_SUCCESS'), true, ENUM_CROUTON_SUCCESS);
+          artifactCache = database;
         }
       });
     });
@@ -541,6 +583,34 @@ jQuery.hotkeys.options.filterContentEditable = false;
       replaceTextRegular(shortcut.trim(), '', event.target);
       updateSpotlightPlaceholderText();
     }
+
+    checkDupes();
+  }
+
+  // Check if there are dupes and show them
+  function checkDupes() {
+    console.log('checkDupes');
+    var project = $(SPOTLIGHT_SELECTOR).attr(SPOTLIGHT_PROJECT_DATA_ATTR)
+      , type = $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_TYPE_DATA_ATTR)
+      , content = $(SPOTLIGHT_INPUT_SELECTOR).val()
+      , dupes = getDupes(project, type, content);
+    console.log(dupes);
+
+    // Clear current dupes
+    var $dupeDiv = $(SPOTLIGHT_DUPE_SELECTOR);
+    $dupeDiv.html('').removeAttr(SPOTLIGHT_DUPE_DATA_ATTR);
+    if (dupes.length > 0) {
+      $dupeDiv.attr(SPOTLIGHT_DUPE_DATA_ATTR, dupes.length);
+      for (var i = 0; i < dupes.length - 1 && i < 3; i++) {
+        $dupeDiv.append($(document.createElement('p')).text(dupes[i].content));
+      }
+    }
+  }
+
+  // Clear dupes
+  function clearDupes() {
+    var $dupeDiv = $(SPOTLIGHT_DUPE_SELECTOR);
+    $dupeDiv.html('').removeAttr(SPOTLIGHT_DUPE_DATA_ATTR);
   }
 
   // When user lifts up on a key, to catch backspace
@@ -590,6 +660,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         updateSpotlightPlaceholderText();
       }
 
+      checkDupes();
       typingBuffer.pop(); // Remove last character typed
     }
 
@@ -1265,7 +1336,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     chrome.runtime.sendMessage({
       request:'getRecentHistory'
     }, function(data) {
-      console.log('getRecentHistory:', data);
+      // console.log('getRecentHistory:', data);
       history = data;
       if (completionBlock) {
         completionBlock();
@@ -1278,7 +1349,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     chrome.runtime.sendMessage({
       request:'getRecentBookmarks'
     }, function(data) {
-      console.log('getRecentBookmarks:', data);
+      // console.log('getRecentBookmarks:', data);
       bookmarks = data;
       if (completionBlock) {
         completionBlock();
@@ -1403,6 +1474,13 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }
   }
 
+  // Update artifact Cache
+  function updateArtifactCache() {
+    chrome.storage.sync.get(null, function (database) {
+      artifactCache = database;
+    });
+  }
+
   // Get XSRF token for access to engage
   function getXsrfToken() {
     console.log('getXsrfToken');
@@ -1418,6 +1496,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
   $(function() {
     addSpotlightListener();         // Add listener for keyboard shortcut
     getRecentBookmarks();
+    updateArtifactCache();
     addCopyListener();
     getXsrfToken();
 	});

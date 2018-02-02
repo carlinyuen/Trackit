@@ -104,6 +104,19 @@
   border-top: solid 1px #ddd;
 }
 
+#trackit-spotlight .trackit-spotlight-dupe[data-dupes]:before {
+  content: "potential dupes:";
+  display: table;
+  clear: both;
+  width: 100%;
+  padding-top: 6px;
+  border-top: solid 1px #ddd;
+  font: normal 12px/16px 'Helvetica';
+}
+#trackit-spotlight .trackit-spotlight-dupe p {
+  margin: 8px 0 0 0;
+}
+
 .atwho-view ul li {
   line-height: 16px;
   width: 400px;
