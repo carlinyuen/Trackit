@@ -150,7 +150,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
         .attr('placeholder', chrome.i18n.getMessage('SPOTLIGHT_PLACEHOLDER_ZERO'))
-        // .on(EVENT_NAME_BLUR, hideSpotlight)
+        .on(EVENT_NAME_BLUR, hideSpotlight)
       )
       .append($(d.createElement('span'))
         .addClass(SPOTLIGHT_DATA_CLASS)
