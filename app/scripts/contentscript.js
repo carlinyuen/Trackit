@@ -57,7 +57,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_LINK_DATA_ATTR = 'data-link'
 
     , PERSON_DATA = ['carlin', 'sivan', 'anya', 'charles', 'jason', 'matt', 'marie', 'elena', 'adam', 'rob', 'seth']
-    , PROJECT_DATA = ['engage', 'collaboration', 'huddle']
+    , TYPE_DATA = [{
+        name: 'AI',
+        title: 'Action Item',
+      }, {
+        name: 'DC',
+        title: 'Decision',
+      }, {
+        name: 'UD',
+        title: 'Update'
+      }]
+    , PROJECT_DATA = ['private', 'engage', 'collaboration', 'huddle']
     , LINK_DATA = [{
         name:'http://go/engage-hack',
         imgsrc: chrome.extension.getURL('images/icon-presentation.png'),
@@ -224,6 +234,14 @@ jQuery.hotkeys.options.filterContentEditable = false;
         beforeInsert: autocompleteUpdateLink
       }
     }).atwho({
+      at: ':',
+      data: TYPE_DATA,
+      displayTpl: '<li>${title}</li>',
+      insertTpl: '${name}:',
+      callbacks: {
+        beforeInsert: autocompleteUpdateType
+      }
+    }).atwho({
       at: '#',
       data: PROJECT_DATA,
       callbacks: {
@@ -301,6 +319,17 @@ jQuery.hotkeys.options.filterContentEditable = false;
     console.log('autocompleteUpdateProject:', projectName);
     var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
     if (checkShortcuts(projectName + ' ', ' ', $textInput)) {
+      replaceTextRegular(typingBuffer.join(''), '', $textInput[0]);
+      updateSpotlightPlaceholderText();
+    }
+    return '';
+  }
+
+  // Update type data from autocomplete
+  function autocompleteUpdateType(typeName) {
+    console.log('autocompleteUpdateType:', typeName);
+    var $textInput = $(SPOTLIGHT_INPUT_SELECTOR);
+    if (checkShortcuts(typeName + ' ', ' ', $textInput)) {
       replaceTextRegular(typingBuffer.join(''), '', $textInput[0]);
       updateSpotlightPlaceholderText();
     }
