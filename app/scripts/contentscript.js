@@ -49,6 +49,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , SPOTLIGHT_PROJECT_C = 'COLLABORATION'
     , SPOTLIGHT_PROJECT_E = 'ENGAGE'
     , SPOTLIGHT_PROJECT_H = 'HUDDLE'
+    , SPOTLIGHT_PROJECT_P = 'PERSONAL'
     , SPOTLIGHT_TYPE_DATA_ATTR = 'data-type'
     , SPOTLIGHT_TYPE_A = 'actionitem'
     , SPOTLIGHT_TYPE_D = 'decision'
@@ -68,12 +69,19 @@ jQuery.hotkeys.options.filterContentEditable = false;
         title: 'Update'
       }]
     , PROJECT_DATA = ['private', 'engage', 'collaboration', 'huddle']
+    , LINK_IMGSRC = {
+        'spreadsheets': chrome.extension.getURL('images/icon-spreadsheets.png'),
+        'document': chrome.extension.getURL('images/icon-document.png'),
+        'presentation': chrome.extension.getURL('images/icon-presentation.png'),
+      }
     , LINK_DATA = [{
+        title:'go/engage-hack',
         name:'http://go/engage-hack',
-        imgsrc: chrome.extension.getURL('images/icon-presentation.png'),
+        imgsrc: LINK_IMGSRC['presentation'],
       }, {
+        title:'go/team-collaboration',
         name:'http://go/team-collaboration',
-        imgsrc: chrome.extension.getURL('images/icon-document.png'),
+        imgsrc: LINK_IMGSRC['document'],
       }]
 
     , URL_XSRF_TOKEN = 'https://huddle.corp.google.com/_/engage/token?rt=j'
@@ -133,6 +141,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var d = document;
     $(d.createElement('form'))
       .attr('id', SPOTLIGHT_ID)
+      .attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_P)
       .append($(d.createElement('textarea'))
         .addClass(SPOTLIGHT_INPUT_CLASS)
         .attr('type', 'text')
@@ -190,17 +199,14 @@ jQuery.hotkeys.options.filterContentEditable = false;
     // if (!bookmarks) {
     //   bookmarks = LINK_DATA;
     // }
-    var links = $.merge(history, bookmarks);
-    if (!links) {
-      links = LINK_DATA;
-    }
+    var links = $.merge(history, bookmarks, LINK_DATA);
     linkAutocomplete = $.map(links, function(value, i) {
       return {
         id: i,
         name: value.title,
         url: value.url,
         hostname: new URL(value.url).hostname,
-        imgsrc: URL_FAVICON_FETCH + value.url,
+        imgsrc: (value.imgsrc ? value.imgsrc : URL_FAVICON_FETCH + value.url),
       };
     });
     $textInput.atwho({
@@ -492,9 +498,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
         } else if ($dataSpan.attr(SPOTLIGHT_TYPE_DATA_ATTR)) {
           $dataSpan.removeAttr(SPOTLIGHT_TYPE_DATA_ATTR);
           console.log('removed type data attr');
-        } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
-          $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
-          console.log('removed project data attr');
+        // } else if ($spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR)) {
+        //   $spotlight.removeAttr(SPOTLIGHT_PROJECT_DATA_ATTR);
+        //   console.log('removed project data attr');
         }
         updateSpotlightPlaceholderText();
       }
@@ -540,6 +546,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
       case '#COLLABORATION ':
       case '#H ':
       case '#HUDDLE ':
+      case '#P ':
+      case '#PERSONAL ':
       {
         match = true;
 
@@ -573,6 +581,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
           case '#H ':
           case '#HUDDLE ':
             $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_H);
+            break;
+          case '#P ':
+          case '#PERSONAL ':
+            $spotlight.attr(SPOTLIGHT_PROJECT_DATA_ATTR, SPOTLIGHT_PROJECT_P);
             break;
         }
       }
@@ -610,6 +622,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       , messageCode
     ;
 
+    console.log('updateSpotlightPlaceholderText:', guideState);
     switch (guideState) {
       case 0: messageCode = 'SPOTLIGHT_PLACEHOLDER_ZERO'; break;
       case 1: messageCode = 'SPOTLIGHT_PLACEHOLDER_ONE'; break;
