@@ -2,7 +2,7 @@
   "name": "__MSG_appName__",
   "version": "0.0.1",
   "manifest_version": 2,
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAik7t60hI7y1MBCiuULeHAK2ctY+5UbKn8EeIvl5nvx0n5Ab2F95nSfOS8XU6GUY6kejFBtTJQGHVZEmPpRYRM1ZFS7EeTPziybGzxDxZfXACrEXcTu/0g7CQa7Q1+88tWmyyozVHF7vLeT6T839K3UgFs0ubAVGBBpKdIqKMZt+Cd4BZ/OZrb+O71depJyRutiS4ejlevqAC44XxSPYDLeC5duaH6XHPrAduAeuKUUvTGpA/Q/inihTwhGcWlUv8/knWmZu9liugYX13aLTDjm59CaUs7t41LL17HUWbjRQfjYMSAnPgMhoIaqR87TAoxcEv2nE35+QXNn2aKtWkpwIDAQAB",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg/wAu86aayfkDEvVAGgdtl8FS2/axn1JqdDl9awFDUdSLZrCNJ/7vMJBEUp3IpgzBMF+qFH9UZFQJIuyo2vRHnmIXDMVXEfYLmIJ9WfMYQnu8sUvcTilj7zCzaWSyo1/VqGeahsRX18VZBaMyOc4vauSojZFi66ZkR+dd9JoPhbxFFAMrcZkYeoIL27+ofKRy01gCBN/p3kQtowfvQtxGA+5irSqspXPtFIeTY20ZBhGaYR1KXu9wwa9ghtuQPf00Gy8+FyDzFwemawJ3KjlATokTjqEw9Z8ZM1kB6sS0q50xSJUhlbQ+/FMFN0owm7K5UHTSXGOALS8YPnHASeP3wIDAQAB",
   "description": "__MSG_appDescription__",
   "icons": {
     "16": "images/icon-16.png",

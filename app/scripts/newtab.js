@@ -160,145 +160,145 @@ var trackit = (function() {
   ////////////////////////////////////////////////
   // OAuthentication and request handling
 
-  function interactiveSignIn(callback) {
-    changeState(STATE_ACQUIRING_AUTHTOKEN);
+  // function interactiveSignIn(callback) {
+  //   changeState(STATE_ACQUIRING_AUTHTOKEN);
+  //
+  //   chrome.identity.getAuthToken({
+  //     'interactive': true
+  //   }, function(token) {
+  //     if (chrome.runtime.lastError) {
+  //       console.log(chrome.runtime.lastError);
+  //       console.log('Could not authenticate. :(');
+  //       changeState(STATE_START);
+  //     } else {
+  //       console.log('Token acquired: ' + token +
+  //         '. See chrome://identity-internals for details.');
+  //       callback();
+  //     }
+  //   });
+  // }
 
-    chrome.identity.getAuthToken({
-      'interactive': true
-    }, function(token) {
-      if (chrome.runtime.lastError) {
-        console.log(chrome.runtime.lastError);
-        console.log('Could not authenticate. :(');
-        changeState(STATE_START);
-      } else {
-        console.log('Token acquired: ' + token +
-          '. See chrome://identity-internals for details.');
-        callback();
-      }
-    });
-  }
-
-  // Revoke OAuth token
-  function revokeToken() {
-    console.log('revokeToken');
-    chrome.identity.getAuthToken({ 'interactive': false },
-      function(current_token) {
-        if (!chrome.runtime.lastError) {
-
-          // Remove the local cached token
-          chrome.identity.removeCachedAuthToken({
-            token: current_token
-          }, function() {});
-
-          // Make a request to revoke token in the server
-          $.get('https://accounts.google.com/o/oauth2/revoke?token=' + current_token);
-
-          // Update the user interface accordingly
-          changeState(STATE_START);
-          console.log('Token revoked and removed from cache. '+
-            'Check chrome://identity-internals to confirm.');
-        }
-    });
-  }
+  // // Revoke OAuth token
+  // function revokeToken() {
+  //   console.log('revokeToken');
+  //   chrome.identity.getAuthToken({ 'interactive': false },
+  //     function(current_token) {
+  //       if (!chrome.runtime.lastError) {
+  //
+  //         // Remove the local cached token
+  //         chrome.identity.removeCachedAuthToken({
+  //           token: current_token
+  //         }, function() {});
+  //
+  //         // Make a request to revoke token in the server
+  //         $.get('https://accounts.google.com/o/oauth2/revoke?token=' + current_token);
+  //
+  //         // Update the user interface accordingly
+  //         changeState(STATE_START);
+  //         console.log('Token revoked and removed from cache. '+
+  //           'Check chrome://identity-internals to confirm.');
+  //       }
+  //   });
+  // }
 
   // Make an authenticated request, checking for token and getting it otherwise.
-  function requestWithAuth(method, url, callback, params) {
-    var access_token;
-    var retry = true;
-
-    getToken();
-
-    function getToken(interactive) {
-      chrome.identity.getAuthToken({
-        interactive: interactive
-      }, function(token) {
-        if (chrome.runtime.lastError) {
-          console.log('requestWithAuth:', chrome.runtime.lastError);
-          if (callback) {
-            callback(null);
-          }
-          return;
-        }
-
-        console.log(token);
-        access_token = token;
-        requestStart();
-      });
-    }
-
-    function requestStart() {
-      console.log('requestStart:', url);
-      $.ajax({
-        type: method,
-        url: url,
-        data: params,
-        dataType: 'json',
-        headers: { 'Authorization': 'Bearer ' + access_token },
-        success: callback,
-        error: requestError
-      });
-    }
-
-    function requestError() {
-      console.log('request error!');
-      if (retry) {
-        retry = false;
-        chrome.identity.removeCachedAuthToken({
-          token: access_token
-        }, getToken)
-      } else if (callback) {
-        callback(null);
-      }
-    }
-  }
+  // function requestWithAuth(method, url, callback, params) {
+  //   var access_token;
+  //   var retry = true;
+  //
+  //   getToken();
+  //
+  //   function getToken(interactive) {
+  //     chrome.identity.getAuthToken({
+  //       interactive: interactive
+  //     }, function(token) {
+  //       if (chrome.runtime.lastError) {
+  //         console.log('requestWithAuth:', chrome.runtime.lastError);
+  //         if (callback) {
+  //           callback(null);
+  //         }
+  //         return;
+  //       }
+  //
+  //       console.log(token);
+  //       access_token = token;
+  //       requestStart();
+  //     });
+  //   }
+  //
+  //   function requestStart() {
+  //     console.log('requestStart:', url);
+  //     $.ajax({
+  //       type: method,
+  //       url: url,
+  //       data: params,
+  //       dataType: 'json',
+  //       headers: { 'Authorization': 'Bearer ' + access_token },
+  //       success: callback,
+  //       error: requestError
+  //     });
+  //   }
+  //
+  //   function requestError() {
+  //     console.log('request error!');
+  //     if (retry) {
+  //       retry = false;
+  //       chrome.identity.removeCachedAuthToken({
+  //         token: access_token
+  //       }, getToken)
+  //     } else if (callback) {
+  //       callback(null);
+  //     }
+  //   }
+  // }
 
   ////////////////////////////////////////////////////
   ////////////////////////////////////////////////////
   ////////////////////////////////////////////////////
   // Google API calls
 
-  function getEvents() {
-    console.log('getEventInfo:');
-    var startDate = new Date(), endDate = new Date();
-    endDate.setDate(endDate.getDate() + DAYS_IN_ADVANCE);
-    endDate.setHours(24,0,0,0);
-    requestWithAuth('GET',
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-      onEventsFetched,
-      {
-        timeMax: endDate.toISOString(),
-        timeMin: startDate.toISOString(),
-      });
-  }
+  // function getEvents() {
+  //   console.log('getEventInfo:');
+  //   var startDate = new Date(), endDate = new Date();
+  //   endDate.setDate(endDate.getDate() + DAYS_IN_ADVANCE);
+  //   endDate.setHours(24,0,0,0);
+  //   requestWithAuth('GET',
+  //     'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+  //     onEventsFetched,
+  //     {
+  //       timeMax: endDate.toISOString(),
+  //       timeMin: startDate.toISOString(),
+  //     });
+  // }
+  //
+  // function onEventsFetched(data) {
+  //   console.log('eventsFetched:', data);
+  //   if (data) {
+  //     eventList = data;
+  //     populateEvents(data);
+  //   }
+  // }
 
-  function onEventsFetched(data) {
-    console.log('eventsFetched:', data);
-    if (data) {
-      eventList = data;
-      populateEvents(data);
-    }
-  }
-
-  function getUserInfo() {
-    console.log('getUserInfo:');
-    requestWithAuth('GET',
-      'https://people.googleapis.com/v1/people/me',
-      onUserInfoFetched,
-      {
-        'requestMask.includeField': 'person.names,person.photos'
-      });
-  }
-
-  function onUserInfoFetched(data) {
-    console.log('UserInfoFetched:', data);
-    if (data) {
-      changeState(STATE_AUTHTOKEN_ACQUIRED);
-      userInfo = data;
-      populateUserInfo(data);
-    } else {
-      changeState(STATE_START);
-    }
-  }
+  // function getUserInfo() {
+  //   console.log('getUserInfo:');
+  //   requestWithAuth('GET',
+  //     'https://people.googleapis.com/v1/people/me',
+  //     onUserInfoFetched,
+  //     {
+  //       'requestMask.includeField': 'person.names,person.photos'
+  //     });
+  // }
+  //
+  // function onUserInfoFetched(data) {
+  //   console.log('UserInfoFetched:', data);
+  //   if (data) {
+  //     changeState(STATE_AUTHTOKEN_ACQUIRED);
+  //     userInfo = data;
+  //     populateUserInfo(data);
+  //   } else {
+  //     changeState(STATE_START);
+  //   }
+  // }
 
   // Get current project list
   function getProjects(callback) {
@@ -380,16 +380,16 @@ var trackit = (function() {
 
   // Get all relevant information
   function getData() {
-    if (!userInfo) {
-      getUserInfo();
-    } else {
-      onUserInfoFetched(userInfo);
-    }
-    if (!eventList) {
-      getEvents();
-    } else {
-      onEventsFetched(eventList);
-    }
+    // if (!userInfo) {
+    //   getUserInfo();
+    // } else {
+    //   onUserInfoFetched(userInfo);
+    // }
+    // if (!eventList) {
+    //   getEvents();
+    // } else {
+    //   onEventsFetched(eventList);
+    // }
     // getProgress();
   }
 
@@ -427,128 +427,128 @@ var trackit = (function() {
   }
 
   // Populate event info
-  function populateEvents(data) {
-    var prev
-      , prevStart
-      , prevEnd
-      , upcoming
-      , upcomingStart
-      , upcomingEnd
-      , now = new Date()
-    ;
-
-    $.each(data.items, function(i, el) {
-      // Update latest event that passed
-      var date = new Date(Date.parse(el.end.dateTime));
-      if (!prev && date < now) {
-        prev = el;
-      }
-      else if (prev) {
-        prevEnd = new Date(Date.parse(prev.end.dateTime));
-        if (date < now && prev && prevEnd < date) {
-          prev = el;
-        }
-      }
-      // Update nearest upcoming event
-      date = new Date(Date.parse(el.start.dateTime));
-      if (!upcoming && date > now) {
-        upcoming = el;
-      } else if (upcoming) {
-        upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
-        if (date > now && upcoming && upcomingStart > date) {
-          upcoming = el;
-        }
-      }
-    });
-    console.log('most recent event:', prev);
-    console.log('upcoming event:', upcoming);
-
-    // Update event UI
-    if (prev) {
-      prevStart = new Date(Date.parse(prev.start.dateTime));
-      $('.events .previous .panel-title')
-        .append($(document.createElement('a'))
-          .attr('href', prev.htmlLink)
-          .attr('target', '_blank')
-          .text(prev.summary)
-        ).append('<br>').append($(document.createElement('small'))
-          .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
-        );
-    } else {
-      $('.events .previous').fadeOut();
-    }
-    if (upcoming) {
-      upcomingEnd = new Date(Date.parse(upcoming.end.dateTime));
-      var $e = $('.events .upcoming');
-
-      // Header
-      $e.find('.panel-title')
-        .append($(document.createElement('a'))
-          .attr('href', upcoming.htmlLink)
-          .attr('target', '_blank')
-          .text(upcoming.summary)
-        ).append('<br>').append($(document.createElement('small'))
-          .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
-        )
-      ;
-
-      // Hangouts link
-      if (upcoming.hangoutLink) {
-        var el = $(document.createElement('div'))
-          .addClass('pull-right')
-          .append($(document.createElement('span'))
-            .addClass('alert-success glyphicon glyphicon-facetime-video')
-          ).append($(document.createElement('a'))
-            .attr('href', upcoming.hangoutLink)
-            .attr('target', '_blank')
-            .text(' Hangouts link')
-          )
-        ;
-        $e.find('.panel-body').append(el);
-      }
-
-      // Description
-      if (upcoming.description) {
-        var el = $(document.createElement('p'))
-          .text(upcoming.description);
-        $e.find('.panel-body').append(el);
-      }
-
-      // Attachments
-      if (upcoming.attachments) {
-        var el = $(document.createElement('div'))
-          .addClass('attachments');
-        $.each(upcoming.attachments, function(i, obj) {
-          $(document.createElement('div'))
-            .addClass('file')
-            .attr('data-fileID', obj.fileId)
-            .append($(document.createElement('img'))
-              .addClass('thumbnail')
-              .attr('src', DRIVE_THUMBNAIL_PATH + obj.fileId)
-            )
-            .append($(document.createElement('span'))
-              .addClass('fileTitle')
-              .append($(document.createElement('a'))
-                .attr('href', obj.fileUrl)
-                .attr('target', '_blank')
-                .text(' ' + obj.title)
-                .prepend($(document.createElement('img'))
-                  .attr('src', obj.iconLink)
-                )
-              )
-            )
-            .appendTo(el);
-          fetchBadgesForFile(obj.fileId);  // Async get badges
-        });
-        $e.find('.panel-body').append(el);
-      }
-    } else {
-      $('.events .upcoming').fadeOut();
-    }
-
-    // Show UI
-    $('.events').fadeIn();
-  }
+  // function populateEvents(data) {
+  //   var prev
+  //     , prevStart
+  //     , prevEnd
+  //     , upcoming
+  //     , upcomingStart
+  //     , upcomingEnd
+  //     , now = new Date()
+  //   ;
+  //
+  //   $.each(data.items, function(i, el) {
+  //     // Update latest event that passed
+  //     var date = new Date(Date.parse(el.end.dateTime));
+  //     if (!prev && date < now) {
+  //       prev = el;
+  //     }
+  //     else if (prev) {
+  //       prevEnd = new Date(Date.parse(prev.end.dateTime));
+  //       if (date < now && prev && prevEnd < date) {
+  //         prev = el;
+  //       }
+  //     }
+  //     // Update nearest upcoming event
+  //     date = new Date(Date.parse(el.start.dateTime));
+  //     if (!upcoming && date > now) {
+  //       upcoming = el;
+  //     } else if (upcoming) {
+  //       upcomingStart = new Date(Date.parse(upcoming.start.dateTime));
+  //       if (date > now && upcoming && upcomingStart > date) {
+  //         upcoming = el;
+  //       }
+  //     }
+  //   });
+  //   console.log('most recent event:', prev);
+  //   console.log('upcoming event:', upcoming);
+  //
+  //   // Update event UI
+  //   if (prev) {
+  //     prevStart = new Date(Date.parse(prev.start.dateTime));
+  //     $('.events .previous .panel-title')
+  //       .append($(document.createElement('a'))
+  //         .attr('href', prev.htmlLink)
+  //         .attr('target', '_blank')
+  //         .text(prev.summary)
+  //       ).append('<br>').append($(document.createElement('small'))
+  //         .text(prevStart.toLocaleTimeString() + ' to ' + prevEnd.toLocaleTimeString())
+  //       );
+  //   } else {
+  //     $('.events .previous').fadeOut();
+  //   }
+  //   if (upcoming) {
+  //     upcomingEnd = new Date(Date.parse(upcoming.end.dateTime));
+  //     var $e = $('.events .upcoming');
+  //
+  //     // Header
+  //     $e.find('.panel-title')
+  //       .append($(document.createElement('a'))
+  //         .attr('href', upcoming.htmlLink)
+  //         .attr('target', '_blank')
+  //         .text(upcoming.summary)
+  //       ).append('<br>').append($(document.createElement('small'))
+  //         .text(upcomingStart.toLocaleTimeString() + ' to ' + upcomingEnd.toLocaleTimeString())
+  //       )
+  //     ;
+  //
+  //     // Hangouts link
+  //     if (upcoming.hangoutLink) {
+  //       var el = $(document.createElement('div'))
+  //         .addClass('pull-right')
+  //         .append($(document.createElement('span'))
+  //           .addClass('alert-success glyphicon glyphicon-facetime-video')
+  //         ).append($(document.createElement('a'))
+  //           .attr('href', upcoming.hangoutLink)
+  //           .attr('target', '_blank')
+  //           .text(' Hangouts link')
+  //         )
+  //       ;
+  //       $e.find('.panel-body').append(el);
+  //     }
+  //
+  //     // Description
+  //     if (upcoming.description) {
+  //       var el = $(document.createElement('p'))
+  //         .text(upcoming.description);
+  //       $e.find('.panel-body').append(el);
+  //     }
+  //
+  //     // Attachments
+  //     if (upcoming.attachments) {
+  //       var el = $(document.createElement('div'))
+  //         .addClass('attachments');
+  //       $.each(upcoming.attachments, function(i, obj) {
+  //         $(document.createElement('div'))
+  //           .addClass('file')
+  //           .attr('data-fileID', obj.fileId)
+  //           .append($(document.createElement('img'))
+  //             .addClass('thumbnail')
+  //             .attr('src', DRIVE_THUMBNAIL_PATH + obj.fileId)
+  //           )
+  //           .append($(document.createElement('span'))
+  //             .addClass('fileTitle')
+  //             .append($(document.createElement('a'))
+  //               .attr('href', obj.fileUrl)
+  //               .attr('target', '_blank')
+  //               .text(' ' + obj.title)
+  //               .prepend($(document.createElement('img'))
+  //                 .attr('src', obj.iconLink)
+  //               )
+  //             )
+  //           )
+  //           .appendTo(el);
+  //         fetchBadgesForFile(obj.fileId);  // Async get badges
+  //       });
+  //       $e.find('.panel-body').append(el);
+  //     }
+  //   } else {
+  //     $('.events .upcoming').fadeOut();
+  //   }
+  //
+  //   // Show UI
+  //   $('.events').fadeIn();
+  // }
 
   // Get badges for a file to show
   function fetchBadgesForFile(fileID) {
@@ -694,13 +694,13 @@ var trackit = (function() {
       buttonAddProjectInput = $('.addProjectInput');
       buttonSubmitAddProjectForm = $('#submitAddProjectForm');
 
-      // Button handlers
-      buttonSignin.click(function(e) {
-        e.preventDefault();
-        interactiveSignIn();
-        getData();
-      });
-      buttonLogout.click(revokeToken);
+      // // Button handlers
+      // buttonSignin.click(function(e) {
+      //   e.preventDefault();
+      //   interactiveSignIn();
+      //   getData();
+      // });
+      // buttonLogout.click(revokeToken);
       buttonAddProjectInput.click(addInputFields);
 
       // Form handler
@@ -709,37 +709,37 @@ var trackit = (function() {
         addProject();
       });
 
-      // Feedback rating interactions
-      $('.feedback .rating').hover(function() {
-        var $t = $(this);
-        $t.prevAll().addBack().each(function(i, el) {
-          var $el = $(el);
-          $el.addClass('glyphicon-star');
-          $el.removeClass('glyphicon-star-empty');
-        });
-        $t.nextAll()
-          .removeClass('glyphicon-star')
-          .addClass('glyphicon-star-empty');
-      }, function() {
-        $('.feedback .rating').each(function(i, el) {
-          var $el = $(el);
-          if ($el.hasClass('selected')) {
-            $el.addClass('glyphicon-star');
-            $el.removeClass('glyphicon-star-empty');
-          } else {
-            $el.removeClass('glyphicon-star');
-            $el.addClass('glyphicon-star-empty');
-          }
-        });
-      }).on('click', function() {
-        var $t = $(this);
-        $t.prevAll().addBack()
-          .addClass('selected glyphicon-star')
-          .removeClass('glyphicon-star-empty');
-        $t.nextAll()
-          .removeClass('selected glyphicon-star')
-          .addClass('glyphicon-star-empty');
-      });
+      // // Feedback rating interactions
+      // $('.feedback .rating').hover(function() {
+      //   var $t = $(this);
+      //   $t.prevAll().addBack().each(function(i, el) {
+      //     var $el = $(el);
+      //     $el.addClass('glyphicon-star');
+      //     $el.removeClass('glyphicon-star-empty');
+      //   });
+      //   $t.nextAll()
+      //     .removeClass('glyphicon-star')
+      //     .addClass('glyphicon-star-empty');
+      // }, function() {
+      //   $('.feedback .rating').each(function(i, el) {
+      //     var $el = $(el);
+      //     if ($el.hasClass('selected')) {
+      //       $el.addClass('glyphicon-star');
+      //       $el.removeClass('glyphicon-star-empty');
+      //     } else {
+      //       $el.removeClass('glyphicon-star');
+      //       $el.addClass('glyphicon-star-empty');
+      //     }
+      //   });
+      // }).on('click', function() {
+      //   var $t = $(this);
+      //   $t.prevAll().addBack()
+      //     .addClass('selected glyphicon-star')
+      //     .removeClass('glyphicon-star-empty');
+      //   $t.nextAll()
+      //     .removeClass('selected glyphicon-star')
+      //     .addClass('glyphicon-star-empty');
+      // });
 
       // Fanciness
       $('.flip-container').hover(function() {
@@ -754,6 +754,7 @@ var trackit = (function() {
         } else {
           loadProjects();
         }
+        changeState(STATE_START);
       });
       getData();
     }
