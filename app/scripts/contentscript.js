@@ -22,6 +22,10 @@ jQuery.hotkeys.options.filterContentEditable = false;
     , WHITESPACE_REGEX = /(\s)/
     , NUM_RECENT_BOOKMARKS = 100        // Cache up to 100 recent bookmarks
 
+    , ENUM_CROUTON_DEFAULT = 0
+    , ENUM_CROUTON_ERROR = 1
+    , ENUM_CROUTON_SUCCESS = 2
+
     , NAMESPACE = 'trackit'
     , EVENT_NAME_KEYPRESS = 'keypress.' + NAMESPACE
     , EVENT_NAME_KEYDOWN = 'keydown.' + NAMESPACE
@@ -68,7 +72,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
         name: 'UD',
         title: 'Update'
       }]
-    , PROJECT_DATA = ['private', 'engage', 'collaboration', 'huddle']
+    , PROJECT_DATA = ['personal', 'engage', 'collaboration', 'huddle']
     , LINK_IMGSRC = {
         'spreadsheets': chrome.extension.getURL('images/icon-spreadsheets.png'),
         'document': chrome.extension.getURL('images/icon-document.png'),
@@ -392,6 +396,9 @@ jQuery.hotkeys.options.filterContentEditable = false;
       , type = $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_TYPE_DATA_ATTR)
       , project = $(SPOTLIGHT_SELECTOR).attr(SPOTLIGHT_PROJECT_DATA_ATTR)
       , $link = $(SPOTLIGHT_LINK_SELECTOR)
+      , url = $link.attr(SPOTLIGHT_LINK_DATA_ATTR)
+      , icon = $link.find('a img').attr('src')
+      , title = $link.find('a').attr('title')
       , owners =       $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_OWNERS_DATA_ATTR)
       , value = $textInput.val()
       , message = [];
@@ -402,17 +409,26 @@ jQuery.hotkeys.options.filterContentEditable = false;
       return;
     }
 
-    // Save to somewhere
+    // Sanity check data and build artifact to save
+    var artifact = { content: value };
+    if (!owners || owners == '') {
+      artifact.owners = null;
+    } else {
+      artifact.owners = owners.split(', ');
+    }
+    if (url) {
+      artifact.link = {
+        url: url,
+        icon: (icon ? icon : null),
+        title: (title ? title : null),
+      };
+    }
+
+    // Save to database
     var data = {
       project: project,
-      type: type,
-      link: {
-        url: $link.attr(SPOTLIGHT_LINK_DATA_ATTR),
-        icon: $link.find('a img').attr('src'),
-        title: $link.find('a').attr('title'),
-      },
-      owners: owners.split(', '),
-      content: value,
+      type: (type && type != '') ? type : 'misc',
+      artifact: artifact,
     };
     saveArtifact(data);
 
@@ -443,6 +459,40 @@ jQuery.hotkeys.options.filterContentEditable = false;
 
     guideState++;
     updateSpotlightPlaceholderText();
+  }
+
+  // Save artifact to database
+  function saveArtifact(data) {
+    console.log('saveArtifact:', data);
+
+    // Get existing data and update it
+    chrome.storage.sync.get(null, function (database) {
+      if (!database) {
+        database = {};
+      }
+      console.log('before:', database);
+
+      // Merge data
+      if (!database[data.project]) {
+        database[data.project] = {};
+      }
+      var project = database[data.project];
+      if (!project[data.type]) {
+        project[data.type] = [];
+      }
+      project[data.type].push(data.artifact);
+
+      console.log('after:', database);
+      chrome.storage.sync.set(database, function()
+      {
+        if (chrome.runtime.lastError) {
+          console.log(chrome.runtime.lastError);
+          showCrouton(chrome.i18n.getMessage('SAVE_ERROR'), true, ENUM_CROUTON_ERROR);
+        } else {
+          // showCrouton(chrome.i18n.getMessage('SAVE_SUCCESS'), true, ENUM_CROUTON_SUCCESS);
+        }
+      });
+    });
   }
 
   // When user presses a key
@@ -1294,7 +1344,8 @@ jQuery.hotkeys.options.filterContentEditable = false;
   }
 
   // Create and show a warning message crouton that can be dismissed or autohide
-  function showCrouton(message, autohide)
+  //  @param type should be one of the enums
+  function showCrouton(message, autohide, type)
   {
     // Create and style crouton
     var crouton = document.createElement('div');
@@ -1306,9 +1357,21 @@ jQuery.hotkeys.options.filterContentEditable = false;
     crouton.style['text-align'] = 'center';
     crouton.style['font'] = 'bold 16px/16px Helvetica';
     crouton.style['color'] = '#fff';
-    crouton.style['background-color'] = '#222';
     crouton.style['opacity'] = '.8';
     crouton.style['border-radius'] = '4px';
+
+    switch (type) {
+      case ENUM_CROUTON_SUCCESS:
+        crouton.style['background-color'] = '#34bd62';
+        break;
+      case ENUM_CROUTON_ERROR:
+        crouton.style['background-color'] = '#cf4646';
+        break;
+      case ENUM_CROUTON_DEFAULT:
+      default:
+        crouton.style['background-color'] = '#222';
+        break;
+    }
 
     // Add to body, add content
     var $crouton = $(crouton);

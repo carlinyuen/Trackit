@@ -141,8 +141,6 @@ chrome.omnibox.onInputStarted.addListener(function ()
   // Get data
   chrome.storage.sync.get(null, function(data)
   {
-    console.log('caching shortcuts...');
-
     if (chrome.runtime.lastError) {	// Check for errors
       console.log(chrome.runtime.lastError);
     } else {

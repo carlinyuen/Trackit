@@ -42,5 +42,17 @@
   "KEYWORD_OMNIBAR_TRIGGER": {
 		"message": "AI",
 		"description": "Omnibar (url address bar) trigger for extension."
+	},
+  "SAVE_ERROR": {
+		"message": "Could not save. :(",
+		"description": "When saving encounters error"
+	},
+  "SAVE_SUCCESS": {
+		"message": "Yay! Thought captured :)",
+		"description": "When saving succeeds"
+	},
+  "_______": {
+		"message": "___",
+		"description": "______"
 	}
 }
