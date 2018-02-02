@@ -398,15 +398,17 @@ var trackit = (function() {
   }
 
   // Remove a project
-  function removeProject(projectIDs) {
-    console.log('removeProject:', projectIDs);
+  function removeProject(projectID) {
+    console.log('removeProject:', projectID);
 
     // Remove specific project
-    chrome.storage.sync.remove(projectIDs, function() {
+    chrome.storage.sync.remove(projectID, function() {
       if (chrome.runtime.lastError) {	// Check for errors
         console.log(chrome.runtime.lastError);
         alert('Could not remove project. Please refresh.');
         return;
+      } else {
+        delete projectsList[projectID];
       }
       loadProjects();
     });
