@@ -75,12 +75,12 @@ jQuery.hotkeys.options.filterContentEditable = false;
         'presentation': chrome.extension.getURL('images/icon-presentation.png'),
       }
     , LINK_DATA = [{
-        title:'go/engage-hack',
-        name:'http://go/engage-hack',
+        name:'go/engage-hack',
+        url:'http://go/engage-hack',
         imgsrc: LINK_IMGSRC['presentation'],
       }, {
-        title:'go/team-collaboration',
-        name:'http://go/team-collaboration',
+        name:'go/team-collaboration',
+        url:'http://go/team-collaboration',
         imgsrc: LINK_IMGSRC['document'],
       }]
 
@@ -201,12 +201,23 @@ jQuery.hotkeys.options.filterContentEditable = false;
     // }
     var links = $.merge(history, bookmarks, LINK_DATA);
     linkAutocomplete = $.map(links, function(value, i) {
+      // console.log(value);
+      var imgsrc = value.imgsrc;
+      if (!imgsrc) {
+        $.each(LINK_IMGSRC, function(key, src) {
+          // console.log(key);
+          if (value.url.indexOf(key) >= 0) {
+            imgsrc = src;
+          }
+        });
+      }
       return {
         id: i,
         name: value.title,
         url: value.url,
         hostname: new URL(value.url).hostname,
-        imgsrc: (value.imgsrc ? value.imgsrc : URL_FAVICON_FETCH + value.url),
+        imgsrc: (imgsrc ? imgsrc
+            : URL_FAVICON_FETCH + value.url),
       };
     });
     $textInput.atwho({
