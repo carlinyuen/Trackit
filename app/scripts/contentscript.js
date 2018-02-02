@@ -185,6 +185,23 @@ jQuery.hotkeys.options.filterContentEditable = false;
     });
   }
 
+  // Get icon imgsrc for a url
+  function getIconForURL(url) {
+    var iconSrc = '';
+    if (url) {
+      $.each(LINK_IMGSRC, function(key, src) {
+        // console.log(key);
+        if (url.indexOf(key) >= 0) {
+          iconSrc = src;
+        }
+      });
+      if (iconSrc === '') {
+        iconSrc = URL_FAVICON_FETCH + url;
+      }
+    }
+    return iconSrc;
+  }
+
   // Update autocompletes for input field
   //  @param $textInput should be a jquery object
   function updateAutocompletes($textInput) {
@@ -202,22 +219,13 @@ jQuery.hotkeys.options.filterContentEditable = false;
     var links = $.merge(history, bookmarks, LINK_DATA);
     linkAutocomplete = $.map(links, function(value, i) {
       // console.log(value);
-      var imgsrc = value.imgsrc;
-      if (!imgsrc) {
-        $.each(LINK_IMGSRC, function(key, src) {
-          // console.log(key);
-          if (value.url.indexOf(key) >= 0) {
-            imgsrc = src;
-          }
-        });
-      }
+      var imgsrc = (value.imgsrc ? value.imgsrc : getIconForURL(value.url));
       return {
         id: i,
         name: value.title,
         url: value.url,
         hostname: new URL(value.url).hostname,
-        imgsrc: (imgsrc ? imgsrc
-            : URL_FAVICON_FETCH + value.url),
+        imgsrc: imgsrc,
       };
     });
     $textInput.atwho({
@@ -228,6 +236,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       data: linkAutocomplete,
       displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${hostname} : ${name} - ${url}</li>',
       insertTpl: '${url}',
+      limit: 10,
       callbacks: {
         filter: function(query, data, searchKey) {
           // console.log('filter:', query, data, searchKey);
@@ -247,6 +256,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       data: linkAutocomplete,
       displayTpl: '<li><img src="${imgsrc}" height="16" width="16"/> ${hostname} : ${name} - ${url}</li>',
       insertTpl: '${url}',
+      limit: 10,
       callbacks: {
         beforeInsert: autocompleteUpdateLink
       }
@@ -312,11 +322,13 @@ jQuery.hotkeys.options.filterContentEditable = false;
     $link.attr(SPOTLIGHT_LINK_DATA_ATTR, url);
     $link.html([
       ' - ',
-      '<img src="' + URL_FAVICON_FETCH + url + '" height="16" width="16"/> ',
+      '<img src="' + getIconForURL(url) + '" height="16" width="16"/> ',
       '<a href="' + url + '" target="_blank">' + url + '</a>',
     ]);
     getPageTitleForURL(url, function(name) {
-      $link.find('a').text(name.title + ' <' + url + '>');
+      $link.find('a')
+        .text(name.title + ' <' + url + '>')
+        .attr('title', name.title);
     });
   }
 
@@ -380,6 +392,7 @@ jQuery.hotkeys.options.filterContentEditable = false;
       , type = $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_TYPE_DATA_ATTR)
       , project = $(SPOTLIGHT_SELECTOR).attr(SPOTLIGHT_PROJECT_DATA_ATTR)
       , $link = $(SPOTLIGHT_LINK_SELECTOR)
+      , owners =       $(SPOTLIGHT_DATA_SELECTOR).attr(SPOTLIGHT_OWNERS_DATA_ATTR)
       , value = $textInput.val()
       , message = [];
     ;
@@ -390,7 +403,18 @@ jQuery.hotkeys.options.filterContentEditable = false;
     }
 
     // Save to somewhere
-      // .attr(SPOTLIGHT_LINK_DATA_ATTR)
+    var data = {
+      project: project,
+      type: type,
+      link: {
+        url: $link.attr(SPOTLIGHT_LINK_DATA_ATTR),
+        icon: $link.find('a img').attr('src'),
+        title: $link.find('a').attr('title'),
+      },
+      owners: owners.split(', '),
+      content: value,
+    };
+    saveArtifact(data);
 
     // Clean up
     $textInput.val('');
